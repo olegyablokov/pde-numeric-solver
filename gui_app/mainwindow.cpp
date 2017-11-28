@@ -1,43 +1,31 @@
 ﻿#include "mainwindow.h"
 #include <cmath>
 #include <memory>
+
 #include <QtCore/qmath.h>
+#include <QScriptEngine>
 
 using namespace QtDataVisualization;
 
-
-float V1(QVector2D x)
-{
-	float R = qSqrt(x[0] * x[0] + x[1] * x[1]);
-
-	//return (15 * qExp(-R * R / 100)) * (qSin(R * 2));
-	return (15 * qExp(-R * R / 100)) * (qSin(R * 2)) * (qCos(x[1] / 10));
-
-	//return 20 * qExp(-R * R / 20);
-	//return (qPow(1 - x[0], 2) + 100 * qPow(x[1] - x[0] * x[0], 2)) / 1000;
-}
-
-QVector2D V2(QVector2D x)
-{
-	float R = qSqrt(x[0] * x[0] + x[1] * x[1]);
-	return QVector2D(-2.0f * x[0] * qExp(-R * R), -2.0f * x[1] * qExp(-R * R));
-}
-
 MainWindow::MainWindow(QWidget *parent)
-	: QMainWindow(parent), m_timer(new QTimer())
+    : QMainWindow(parent), m_timer(new QTimer()), m_series(new QSurface3DSeries())
 {
 	ui.setupUi(this);
 
 	m_pde_settings_filename = "pde_settings.json";
 	m_PdeSettings = init_pde_settings(m_pde_settings_filename);
-	init_graph();
+
+    //initialize graph:
+    m_graph = init_graph(m_series);
+    ui.GraphWidget = QWidget::createWindowContainer(m_graph, this);
+    ui.GraphWidget->resize(1000, 600);
+    ui.GraphWidget->move(0, 10);
+
 	init_PdeSettingsTableWidget(m_PdeSettings->toQVariantMap());
 
 	m_graph_data = m_PdeSolver->solve(*m_PdeSettings);
 
-	m_series = new QSurface3DSeries();
-
-	m_graph->addSeries(m_series);
+    connect(ui.PdeSettingsTableWidget, SIGNAL(cellClicked(int, int)), this, SLOT(PdeSettingsTableWidgetCellClickedSlot(int, int)));
 
 	connect(ui.EvaluatePushButton, SIGNAL(clicked()), this, SLOT(EvaluatePushButtonClicked()));
 	connect(m_timer, SIGNAL(timeout()), this, SLOT(updateTimeSlice()));
@@ -46,39 +34,68 @@ MainWindow::MainWindow(QWidget *parent)
 	ui.GraphWidget->show();
 }
 
-void MainWindow::init_graph()
+void MainWindow::PdeSettingsTableWidgetCellClickedSlot(int row, int column)
+{
+    if(!((row == 0) && (column == 1))) return;
+
+    QString program = ui.PdeSettingsTableWidget->itemAt(row, column)->text();
+    QScriptEngine expression;
+
+    QColor color;
+    if (expression.canEvaluate(program))
+    {
+        ui.EvaluatePushButton->setDisabled(false);
+        color.setRgb(0, 255, 0);
+    }
+    else
+    {
+        ui.EvaluatePushButton->setDisabled(true);
+        color.setRgb(255, 0, 0);
+    }
+    ui.PdeSettingsTableWidget->itemAt(row, 0)->setBackgroundColor(color);
+    ui.PdeSettingsTableWidget->itemAt(row, 1)->setBackgroundColor(color);
+}
+
+Q3DSurface* MainWindow::init_graph(QSurface3DSeries* series)
 {
 	//QStringList labels;
 	//labels.push_back(QString("LABEL"));
 	//QValue3DAxis axis_y, axis_z;
 	//axis_x.setLabels(labels);
 
-	m_graph = new Q3DSurface();
-	m_graph->setAxisX(new QValue3DAxis);
-	m_graph->setAxisY(new QValue3DAxis);
-	m_graph->setAxisZ(new QValue3DAxis);
+    auto new_graph = new Q3DSurface();
+    new_graph->setAxisX(new QValue3DAxis);
+    new_graph->setAxisY(new QValue3DAxis);
+    new_graph->setAxisZ(new QValue3DAxis);
 
-	m_graph->axisX()->setRange(m_PdeSettings->minX, m_PdeSettings->maxX);
-	m_graph->axisY()->setRange(m_PdeSettings->minY, m_PdeSettings->maxY);
-	//m_graph->axisZ()->setRange(0.0f, 1.0f);
+    new_graph->axisX()->setRange(m_PdeSettings->minX, m_PdeSettings->maxX);
+    new_graph->axisY()->setRange(m_PdeSettings->minY, m_PdeSettings->maxY);
+    //new_graph->axisZ()->setRange(0.0f, 1.0f);
 
-	m_graph->axisX()->setLabelFormat("%.2f");
-	m_graph->axisY()->setLabelFormat("%.2f");
-	m_graph->axisZ()->setLabelFormat("%.2f");
+    new_graph->axisX()->setLabelFormat("%.2f");
+    new_graph->axisY()->setLabelFormat("%.2f");
+    new_graph->axisZ()->setLabelFormat("%.2f");
 
-	m_graph->axisX()->setTitle("Y");
-	m_graph->axisX()->setTitleVisible(true);
-	m_graph->axisY()->setTitle("Z");
-	m_graph->axisY()->setTitleVisible(true);
-	m_graph->axisZ()->setTitle("X");
-	m_graph->axisZ()->setTitleVisible(true);
+    new_graph->axisX()->setTitle("Y");
+    new_graph->axisX()->setTitleVisible(true);
+    new_graph->axisY()->setTitle("Z");
+    new_graph->axisY()->setTitleVisible(true);
+    new_graph->axisZ()->setTitle("X");
+    new_graph->axisZ()->setTitleVisible(true);
 	//m_graph->axisZ()->setReversed(true);
 
+    new_graph->addSeries(series);
 
-	ui.GraphWidget = QWidget::createWindowContainer(m_graph, this);
-	ui.GraphWidget->resize(1000, 600);
-	ui.GraphWidget->move(0, 10);
+    QLinearGradient gr;
+    gr.setColorAt(0.0, Qt::black);
+    gr.setColorAt(0.33, Qt::blue);
+    gr.setColorAt(0.67, Qt::red);
+    gr.setColorAt(1.0, Qt::yellow);
 
+    new_graph->seriesList().at(0)->setBaseGradient(gr);
+    new_graph->seriesList().at(0)->setColorStyle(Q3DTheme::ColorStyleRangeGradient);
+
+    return new_graph;
 }
 
 void MainWindow::init_PdeSettingsTableWidget(QVariantMap pde_settings_map)
@@ -122,8 +139,6 @@ std::shared_ptr<PdeSettings> MainWindow::init_pde_settings(QString pde_settings_
 		QVariantMap map = json_obj.toVariantMap();
 
 		PdeSettings set(map);
-		set.V1 = V1;
-		set.V2 = V2;
 
 		return std::make_shared<PdeSettings>(set);
 	}
@@ -132,8 +147,6 @@ std::shared_ptr<PdeSettings> MainWindow::init_pde_settings(QString pde_settings_
 		pde_file.open(QIODevice::ReadWrite);
 
 		PdeSettings set;
-		set.V1 = V1;
-		set.V2 = V2;
 
 		QJsonObject object = QJsonObject::fromVariantMap(set.toQVariantMap());
 
@@ -146,25 +159,43 @@ std::shared_ptr<PdeSettings> MainWindow::init_pde_settings(QString pde_settings_
 	}
 }
 
+void clearSurfaceDataArray(QSurfaceDataArray& array)
+{
+  for (int j(0); j < array.size(); j++) delete array[j];
+  array.clear();
+}
 
-QSurfaceDataArray* newSurfaceDataArrayFromSource(
-	QSurfaceDataArray& source_surface_data_array,
-	std::function<void(QSurfaceDataItem&)> modifier) {
+void MainWindow::clearData()
+{
+    for (int i(0); i < m_graph_data->size(); i++)
+    {
+        QSurfaceDataArray* array = m_graph_data->at(i);
+        clearSurfaceDataArray(*array);
+    }
+    m_graph_data->erase(m_graph_data->begin(), m_graph_data->end());
+    m_graph_data.reset();
+}
+
+QSurfaceDataArray* newSurfaceDataArrayFromSource(QSurfaceDataArray& source_surface_data_array,
+                                                 std::function<void(QSurfaceDataItem&)> modifier)
+{
 	int sampleCount = source_surface_data_array.size();
 	auto newArray = new QSurfaceDataArray();
 	newArray->reserve(sampleCount);
 	for (int i(0); i < sampleCount; i++)
 		newArray->append(new QSurfaceDataRow(sampleCount));
-	for (int i(0); i < sampleCount; i++) {
+    for (int i(0); i < sampleCount; i++)
+    {
 		const QSurfaceDataRow& sourceRow = *(source_surface_data_array.at(i));
 		QSurfaceDataRow& row = *(*newArray)[i];
-		for (int j(0); j < sampleCount; j++) {
+        for (int j(0); j < sampleCount; j++)
+        {
 			row[j].setPosition(sourceRow.at(j).position());
 			modifier(row[j]);
 		}
 	}
 	return newArray;
-};
+}
 
 void MainWindow::updateTimeSlice()
 {
@@ -173,21 +204,35 @@ void MainWindow::updateTimeSlice()
 	auto qsurface_data_array = m_graph_data->at(m_current_time);
 	auto modifier = [](QSurfaceDataItem item) -> void { item.position(); };
 	
-	m_series->dataProxy()->resetArray(newSurfaceDataArrayFromSource(*qsurface_data_array, modifier));
+    m_series->dataProxy()->resetArray(newSurfaceDataArrayFromSource(*qsurface_data_array, modifier));
 
-	//m_series->dataProxy()->resetArray(m_graph_data->at(current_time));
 	++m_current_time;
 }
 
-void clear_data(std::shared_ptr<QVector<QtDataVisualization::QSurfaceDataArray*>> vector)
-{
-	//TODO: implent delete_data
-}
+//void clear_data(std::shared_ptr<QVector<QtDataVisualization::QSurfaceDataArray*>> vector)
+//{
+//	//TODO: implent delete_data
+//    if (!vector) return;
+
+//    for (auto data_array : *vector)
+//    {
+//        if (!data_array) continue;
+//        for (auto row : *data_array)
+//        {
+//            if (!row) continue;
+//            row->clear();
+////            for (auto& item : *row)
+////            {
+////                item.reset();
+////            }
+//        }
+//    }
+//}
 
 void MainWindow::EvaluatePushButtonClicked()
 {
 	m_timer->stop();
-	clear_data(m_graph_data);
+    clearData();
 
 	//reading from ui.PdeSettingsTableWidget
 	QVariantMap map;

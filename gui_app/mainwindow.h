@@ -40,13 +40,16 @@ public:
 public slots:
 	void updateTimeSlice();
 	void EvaluatePushButtonClicked();
+    void PdeSettingsTableWidgetCellClickedSlot(int, int);
 
 private:
-	void init_graph();
+    QtDataVisualization::Q3DSurface* init_graph(QtDataVisualization::QSurface3DSeries* series);
     void init_PdeSettingsTableWidget(QVariantMap pde_settings_map);
 	std::shared_ptr<PdeSettings> init_pde_settings(QString pde_settings_filename);
 
 	Ui::MainWindowClass ui;
+
+    void clearData();
 
 	//
 	QList<std::shared_ptr<QVector3D>>* m_vector;

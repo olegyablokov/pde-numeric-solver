@@ -1,6 +1,6 @@
 #TARGET = ../build/gui_app
 TEMPLATE = app
-QT += core widgets gui datavisualization
+QT += core widgets gui datavisualization script
 DEFINES += QT_DEPRECATED_WARNINGS
 
 DIR = ../build
@@ -19,7 +19,8 @@ HEADERS += pde_settings.h \
     mainwindow.h
 SOURCES += main.cpp \
     mainwindow.cpp \
-    pde_solver.cpp
+    pde_solver.cpp \
+    pde_settings.cpp
 FORMS += mainwindow.ui
 
 #_______________________________________
