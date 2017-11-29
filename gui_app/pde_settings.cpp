@@ -27,9 +27,6 @@ float PdeSettings::V1(QVector2D x) const
 {
     float R = qSqrt(x[0] * x[0] + x[1] * x[1]);
 
-//    //return (15 * qExp(-R * R / 100)) * (qSin(R * 2));
-//    return (15 * qExp(-R * R / 100)) * (qSin(R * 2)) * (qCos(x[1] / 10));
-
     //TODO: why problems with declaring QScriptEngine instance in class?
     QScriptEngine m_ScriptEngine1;
 
@@ -41,6 +38,8 @@ float PdeSettings::V1(QVector2D x) const
     expression.replace("sin", "Math.sin");
     expression.replace("cos", "Math.cos");
     expression.replace("pow", "Math.pow");
+    expression.replace("PI", "Math.PI");
+    expression.replace("E", "Math.E");
 
     return float(m_ScriptEngine1.evaluate(expression).toNumber());
 }
@@ -49,14 +48,6 @@ void PdeSettings::reset(QVariantMap& map)
 {
     if (map.contains("V1_str")) V1_str = map["V1_str"].value<QString>();
     if (map.contains("V2_str")) V2_str = map["V2_str"].value<QString>();
-
-    /*
-//
-QString expression_string("3 + log(5)");
-QScriptEngine expression;
-double my_val=expression.evaluate(expression_string).toNumber();
-//
-    */
 
     if (map.contains("c")) countX = map["c"].value<float>();
     if (map.contains("m")) countX = map["m"].value<float>();

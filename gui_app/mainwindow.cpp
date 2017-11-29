@@ -10,51 +10,50 @@ using namespace QtDataVisualization;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), m_timer(new QTimer()), m_series(new QSurface3DSeries())
 {
-	ui.setupUi(this);
+    ui.setupUi(this);
 
 	m_pde_settings_filename = "pde_settings.json";
 	m_PdeSettings = init_pde_settings(m_pde_settings_filename);
 
-    //initialize graph:
+    //initialize graph and its widget:
     m_graph = init_graph(m_series);
-    ui.GraphWidget = QWidget::createWindowContainer(m_graph, this);
-    ui.GraphWidget->resize(1000, 600);
-    ui.GraphWidget->move(0, 10);
+    m_GraphWidget = QWidget::createWindowContainer(m_graph);
+    ui.horizontalLayout->addWidget(m_GraphWidget, Qt::AlignLeft);  // but still aligns to the right. why?..
 
 	init_PdeSettingsTableWidget(m_PdeSettings->toQVariantMap());
 
 	m_graph_data = m_PdeSolver->solve(*m_PdeSettings);
 
-    connect(ui.PdeSettingsTableWidget, SIGNAL(cellClicked(int, int)), this, SLOT(PdeSettingsTableWidgetCellClickedSlot(int, int)));
+    //connect(ui.PdeSettingsTableWidget, SIGNAL(cellClicked(int, int)), this, SLOT(PdeSettingsTableWidgetCellClickedSlot(int, int)));
 
 	connect(ui.EvaluatePushButton, SIGNAL(clicked()), this, SLOT(EvaluatePushButtonClicked()));
 	connect(m_timer, SIGNAL(timeout()), this, SLOT(updateTimeSlice()));
 	m_timer->start(m_graph_update_frequency);
 
-	ui.GraphWidget->show();
+    //ui.GraphWidget->show();
 }
 
-void MainWindow::PdeSettingsTableWidgetCellClickedSlot(int row, int column)
-{
-    if(!((row == 0) && (column == 1))) return;
+//void MainWindow::PdeSettingsTableWidgetCellClickedSlot(int row, int column)
+//{
+//    if(!((row == 0) && (column == 1))) return;
 
-    QString program = ui.PdeSettingsTableWidget->itemAt(row, column)->text();
-    QScriptEngine expression;
+//    QString program = ui.PdeSettingsTableWidget->itemAt(row, column)->text();
+//    QScriptEngine expression;
 
-    QColor color;
-    if (expression.canEvaluate(program))
-    {
-        ui.EvaluatePushButton->setDisabled(false);
-        color.setRgb(0, 255, 0);
-    }
-    else
-    {
-        ui.EvaluatePushButton->setDisabled(true);
-        color.setRgb(255, 0, 0);
-    }
-    ui.PdeSettingsTableWidget->itemAt(row, 0)->setBackgroundColor(color);
-    ui.PdeSettingsTableWidget->itemAt(row, 1)->setBackgroundColor(color);
-}
+//    QColor color;
+//    if (expression.canEvaluate(program))
+//    {
+//        ui.EvaluatePushButton->setDisabled(false);
+//        color.setRgb(0, 255, 0);
+//    }
+//    else
+//    {
+//        ui.EvaluatePushButton->setDisabled(true);
+//        color.setRgb(255, 0, 0);
+//    }
+//    ui.PdeSettingsTableWidget->itemAt(row, 0)->setBackgroundColor(color);
+//    ui.PdeSettingsTableWidget->itemAt(row, 1)->setBackgroundColor(color);
+//}
 
 Q3DSurface* MainWindow::init_graph(QSurface3DSeries* series)
 {
@@ -88,8 +87,8 @@ Q3DSurface* MainWindow::init_graph(QSurface3DSeries* series)
 
     QLinearGradient gr;
     gr.setColorAt(0.0, Qt::black);
-    gr.setColorAt(0.33, Qt::blue);
-    gr.setColorAt(0.67, Qt::red);
+    gr.setColorAt(0.2, Qt::blue);
+    gr.setColorAt(0.8, Qt::red);
     gr.setColorAt(1.0, Qt::yellow);
 
     new_graph->seriesList().at(0)->setBaseGradient(gr);
@@ -102,7 +101,7 @@ void MainWindow::init_PdeSettingsTableWidget(QVariantMap pde_settings_map)
 {
 	ui.PdeSettingsTableWidget->verticalHeader()->setVisible(false);
 	ui.PdeSettingsTableWidget->setColumnWidth(0, 80);
-	ui.PdeSettingsTableWidget->setColumnWidth(1, 80);
+    ui.PdeSettingsTableWidget->setColumnWidth(1, 165);
 	ui.PdeSettingsTableWidget->setRowCount(0);
 	int n_row = 0;
 	for (QVariantMap::const_iterator iter = pde_settings_map.begin(); iter != pde_settings_map.end(); ++iter)

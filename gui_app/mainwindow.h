@@ -37,10 +37,12 @@ class MainWindow : public QMainWindow
 public:
 	MainWindow(QWidget *parent = Q_NULLPTR);
 
+    QWidget* m_GraphWidget;
+
 public slots:
 	void updateTimeSlice();
 	void EvaluatePushButtonClicked();
-    void PdeSettingsTableWidgetCellClickedSlot(int, int);
+    //void PdeSettingsTableWidgetCellClickedSlot(int, int);
 
 private:
     QtDataVisualization::Q3DSurface* init_graph(QtDataVisualization::QSurface3DSeries* series);

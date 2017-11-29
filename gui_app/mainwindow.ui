@@ -6,65 +6,76 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1209</width>
-    <height>679</height>
+    <width>1074</width>
+    <height>668</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Pde solver</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QWidget" name="GraphWidget" native="true">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>10</y>
-      <width>1000</width>
-      <height>600</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QTableWidget" name="PdeSettingsTableWidget">
-    <property name="geometry">
-     <rect>
-      <x>1010</x>
-      <y>50</y>
-      <width>191</width>
-      <height>471</height>
-     </rect>
-    </property>
-    <column>
-     <property name="text">
-      <string>Key</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>Value</string>
-     </property>
-    </column>
-   </widget>
-   <widget class="QPushButton" name="EvaluatePushButton">
-    <property name="geometry">
-     <rect>
-      <x>1090</x>
-      <y>580</y>
-      <width>111</width>
-      <height>28</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Evaluate</string>
-    </property>
-   </widget>
+   <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QGroupBox" name="groupBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
+        <property name="title">
+         <string/>
+        </property>
+        <property name="flat">
+         <bool>false</bool>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <item>
+          <widget class="QTableWidget" name="PdeSettingsTableWidget">
+           <column>
+            <property name="text">
+             <string>Key</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Value</string>
+            </property>
+           </column>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="EvaluatePushButton">
+           <property name="text">
+            <string>Evaluate</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1209</width>
-     <height>26</height>
+     <width>1074</width>
+     <height>29</height>
     </rect>
    </property>
   </widget>
@@ -79,8 +90,6 @@
   <widget class="QStatusBar" name="statusBar"/>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources>
-  <include location="mainwindow.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>
