@@ -11,14 +11,17 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), m_timer(new QTimer()), m_series(new QSurface3DSeries())
 {
     ui.setupUi(this);
+    //setStyleSheet("QGroupBox{padding-top:15px; margin-top:-15px}");
 
 	m_pde_settings_filename = "pde_settings.json";
 	m_PdeSettings = init_pde_settings(m_pde_settings_filename);
 
     init_graph();
 	init_PdeSettingsTableWidget(m_PdeSettings->toQVariantMap());
+    init_EquationComboBox();
 
     //now calculate pde with default settings
+    m_PdeSolver = new PdeSolverHeatEquation();  // std::make_shared<PdeSolverHeatEquation>
 	m_graph_data = m_PdeSolver->solve(*m_PdeSettings);
 
     //connect(ui.PdeSettingsTableWidget, SIGNAL(cellClicked(int, int)), this, SLOT(PdeSettingsTableWidgetCellClickedSlot(int, int)));
@@ -153,6 +156,27 @@ std::shared_ptr<PdeSettings> MainWindow::init_pde_settings(QString pde_settings_
 	}
 }
 
+void MainWindow::init_EquationComboBox()
+{
+    ui.EquationComboBox->addItem("Heat equation");
+    ui.EquationComboBox->addItem("Wave equation");
+    connect(ui.EquationComboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(EquationComboBoxCurrentIndexChangedSlot(QString)));
+}
+
+void MainWindow::EquationComboBoxCurrentIndexChangedSlot(QString value)
+{
+    if (value == "Heat equation")
+    {
+        delete m_PdeSolver;
+        m_PdeSolver = new PdeSolverHeatEquation();
+    }
+    else if (value == "Wave equation")
+    {
+        delete m_PdeSolver;
+        m_PdeSolver = new PdeSolverWaveEquation();
+    }
+}
+
 void clearSurfaceDataArray(QSurfaceDataArray& array)
 {
   for (int j(0); j < array.size(); j++) delete array[j];
@@ -161,13 +185,13 @@ void clearSurfaceDataArray(QSurfaceDataArray& array)
 
 void MainWindow::clearData()
 {
-    for (int i(0); i < m_graph_data->size(); i++)
+    for (int i(0); i < m_graph_data.first.size(); i++)
     {
-        QSurfaceDataArray* array = m_graph_data->at(i);
+        QSurfaceDataArray* array = m_graph_data.first.at(i);
         clearSurfaceDataArray(*array);
+        delete array;
     }
-    m_graph_data->erase(m_graph_data->begin(), m_graph_data->end());
-    m_graph_data.reset();
+    m_graph_data.first.erase(m_graph_data.first.begin(), m_graph_data.first.end());
 }
 
 QSurfaceDataArray* newSurfaceDataArrayFromSource(QSurfaceDataArray& source_surface_data_array,
@@ -195,7 +219,7 @@ void MainWindow::updateTimeSlice()
 {
 	if (m_current_time >= m_PdeSettings->countT)
 		m_current_time = 0;
-	auto qsurface_data_array = m_graph_data->at(m_current_time);
+    auto qsurface_data_array = m_graph_data.first.at(m_current_time);
 	auto modifier = [](QSurfaceDataItem item) -> void { item.position(); };
 	
     m_series->dataProxy()->resetArray(newSurfaceDataArrayFromSource(*qsurface_data_array, modifier));
@@ -235,7 +259,6 @@ void MainWindow::EvaluatePushButtonClicked()
 		map.insert(ui.PdeSettingsTableWidget->item(i, 0)->text(), ui.PdeSettingsTableWidget->item(i, 1)->text());
 	m_PdeSettings->reset(map);
 	
-	m_graph_data.reset();
 	m_graph_data = m_PdeSolver->solve(*m_PdeSettings);
 	
 	m_current_time = 0;

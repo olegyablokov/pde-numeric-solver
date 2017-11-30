@@ -1,8 +1,7 @@
 BUGS:
+	wave equation solution is unstable. why?;
 	memory leak	when recalculating the graph data;
-	some graphs don't look as they are supposed to;
-	(sometimes) little graph shivering. why?..
+	somehow remove the empty place at the top of group boxes (Qt bug, meh);
 
 FEATURES:
-    add explicit calculation of pde;
-	    maybe add some graphs for numerical soulution occuracy?
+	add explicit calculation of pde (maybe add some graphs for numerical soulution occuracy?);

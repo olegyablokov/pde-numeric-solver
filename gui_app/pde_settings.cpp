@@ -41,13 +41,33 @@ float PdeSettings::V1(QVector2D x) const
     expression.replace("PI", "Math.PI");
     expression.replace("E", "Math.E");
 
-    return float(m_ScriptEngine1.evaluate(expression).toNumber());
+    return float(m_ScriptEngine1.evaluate(expression).toNumber() / m);
+}
+
+float PdeSettings::V2(QVector2D x) const
+{
+    float R = qSqrt(x[0] * x[0] + x[1] * x[1]);
+
+    QScriptEngine m_ScriptEngine1;
+
+    QString expression = V2_str;
+    expression.replace("x", QString::number(x[0]));
+    expression.replace("y", QString::number(x[1]));
+    expression.replace("R", QString::number(R));
+    expression.replace("sqrt", "Math.sqrt");
+    expression.replace("sin", "Math.sin");
+    expression.replace("cos", "Math.cos");
+    expression.replace("pow", "Math.pow");
+    expression.replace("PI", "Math.PI");
+    expression.replace("E", "Math.E");
+
+    return float(m_ScriptEngine1.evaluate(expression).toNumber() / m);
 }
 
 void PdeSettings::reset(QVariantMap& map)
 {
     if (map.contains("V1")) V1_str = map["V1"].value<QString>();
-    //if (map.contains("V2_str")) V2_str = map["V2_str"].value<QString>();
+    if (map.contains("V2")) V2_str = map["V2"].value<QString>();
 
     if (map.contains("c")) countX = map["c"].value<float>();
     if (map.contains("m")) countX = map["m"].value<float>();
@@ -76,7 +96,7 @@ QVariantMap PdeSettings::toQVariantMap()
     QVariantMap map;
 
     map.insert("V1", V1_str);
-    //map.insert("V2_str", V2_str);
+    map.insert("V2", V2_str);
 
     map.insert("c", c);
     map.insert("m", m);

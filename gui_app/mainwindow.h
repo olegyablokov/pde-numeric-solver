@@ -27,8 +27,11 @@
 #include <string>
 
 #include "pde_settings.h"
-#include "pde_solver.h"
 #include "ui_mainwindow.h"
+
+#include "pde_solver_base.h"
+#include "pde_solver_heat_equation.h"
+#include "pde_solver_wave_equation.h"
 
 class MainWindow : public QMainWindow
 {
@@ -42,27 +45,25 @@ public:
 public slots:
 	void updateTimeSlice();
 	void EvaluatePushButtonClicked();
+    void EquationComboBoxCurrentIndexChangedSlot(QString);
     //void PdeSettingsTableWidgetCellClickedSlot(int, int);
 
 private:
     void init_graph();
     void init_PdeSettingsTableWidget(QVariantMap pde_settings_map);
 	std::shared_ptr<PdeSettings> init_pde_settings(QString pde_settings_filename);
+    void init_EquationComboBox();
 
 	Ui::MainWindowClass ui;
 
     void clearData();
 
-	//
-	QList<std::shared_ptr<QVector3D>>* m_vector;
-	//
-
 	std::shared_ptr<PdeSettings> m_PdeSettings;
 	QString m_pde_settings_filename;
 	int m_current_time = 0;
 	//QtDataVisualization::QSurfaceDataProxy m_SurfaceDataProxy;
-	std::shared_ptr<PdeSolver> m_PdeSolver;
-	std::shared_ptr<QVector<QtDataVisualization::QSurfaceDataArray*>> m_graph_data;
+    PdeSolverBase* m_PdeSolver;  // std::shared_ptr<PdeSolver>
+    PdeSolverBase::GraphData_t m_graph_data;
 	int m_graph_update_frequency = 40;  // in ms
 
 	QtDataVisualization::QSurface3DSeries *m_series;

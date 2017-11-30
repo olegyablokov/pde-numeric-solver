@@ -15,12 +15,18 @@ RCC_DIR = $${DESTDIR}/.rcc
 UI_DIR = $${DESTDIR}/.ui
 
 HEADERS += pde_settings.h \
-    pde_solver.h \
-    mainwindow.h
+    mainwindow.h \
+    pde_solver_heat_equation.h \
+    pde_solver_wave_equation.h \
+    math_module.h \
+    pde_solver_base.h
 SOURCES += main.cpp \
     mainwindow.cpp \
-    pde_solver.cpp \
-    pde_settings.cpp
+    pde_settings.cpp \
+    pde_solver_heat_equation.cpp \
+    pde_solver_wave_equation.cpp \
+    math_module.cpp \
+    pde_solver_base.cpp
 FORMS += mainwindow.ui
 
 #_______________________________________

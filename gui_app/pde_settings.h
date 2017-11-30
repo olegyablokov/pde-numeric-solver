@@ -19,10 +19,10 @@ public:
     ~PdeSettings();
 
     float V1(QVector2D x) const;
-    std::function<QVector2D(QVector2D)> V2 = NULL;
+    float V2(QVector2D x) const;
 
 	float c = 2.0f; 
-	float m= 1.0f;
+    float m = 1.0f;
 
 	int countX = 100;
 	int countY = 100; 
@@ -47,7 +47,7 @@ public:
 
 private:
     QString V1_str = "(15 * pow(E, -R * R / 100)) * (sin(R * 2))";
-    QString V2_str = "None";
+    QString V2_str = "R";
 };
 
 #endif //PDE_SETTINGS_H
