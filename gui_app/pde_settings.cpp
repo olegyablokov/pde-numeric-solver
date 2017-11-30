@@ -46,14 +46,17 @@ float PdeSettings::V1(QVector2D x) const
 
 void PdeSettings::reset(QVariantMap& map)
 {
-    if (map.contains("V1_str")) V1_str = map["V1_str"].value<QString>();
-    if (map.contains("V2_str")) V2_str = map["V2_str"].value<QString>();
+    if (map.contains("V1")) V1_str = map["V1"].value<QString>();
+    //if (map.contains("V2_str")) V2_str = map["V2_str"].value<QString>();
 
     if (map.contains("c")) countX = map["c"].value<float>();
     if (map.contains("m")) countX = map["m"].value<float>();
 
-    if (map.contains("countX")) countX = map["countX"].value<int>();
-    if (map.contains("countY")) countY = map["countY"].value<int>();
+    if (map.contains("countX(Y)"))
+    {
+        countX = map["countX(Y)"].value<int>();
+        countY = countX;
+    }
     if (map.contains("countT")) countT = map["countT"].value<int>();
 
     if (map.contains("minX")) minX = map["minX"].value<float>();
@@ -72,14 +75,14 @@ QVariantMap PdeSettings::toQVariantMap()
 {
     QVariantMap map;
 
-    map.insert("V1_str", V1_str);
-    map.insert("V2_str", V2_str);
+    map.insert("V1", V1_str);
+    //map.insert("V2_str", V2_str);
 
     map.insert("c", c);
     map.insert("m", m);
 
-    map.insert("countX", countX);
-    map.insert("countY", countY);
+    map.insert("countX(Y)", countX);
+    //map.insert("countY", countY);
     map.insert("countT", countT);
 
     map.insert("minX", minX);

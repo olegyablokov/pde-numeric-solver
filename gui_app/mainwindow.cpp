@@ -15,22 +15,16 @@ MainWindow::MainWindow(QWidget *parent)
 	m_pde_settings_filename = "pde_settings.json";
 	m_PdeSettings = init_pde_settings(m_pde_settings_filename);
 
-    //initialize graph and its widget:
-    m_graph = init_graph(m_series);
-    m_GraphWidget = QWidget::createWindowContainer(m_graph);
-    ui.horizontalLayout->addWidget(m_GraphWidget, Qt::AlignLeft);  // but still aligns to the right. why?..
-
+    init_graph();
 	init_PdeSettingsTableWidget(m_PdeSettings->toQVariantMap());
 
+    //now calculate pde with default settings
 	m_graph_data = m_PdeSolver->solve(*m_PdeSettings);
 
     //connect(ui.PdeSettingsTableWidget, SIGNAL(cellClicked(int, int)), this, SLOT(PdeSettingsTableWidgetCellClickedSlot(int, int)));
-
 	connect(ui.EvaluatePushButton, SIGNAL(clicked()), this, SLOT(EvaluatePushButtonClicked()));
 	connect(m_timer, SIGNAL(timeout()), this, SLOT(updateTimeSlice()));
-	m_timer->start(m_graph_update_frequency);
-
-    //ui.GraphWidget->show();
+    m_timer->start(m_graph_update_frequency);
 }
 
 //void MainWindow::PdeSettingsTableWidgetCellClickedSlot(int row, int column)
@@ -55,53 +49,54 @@ MainWindow::MainWindow(QWidget *parent)
 //    ui.PdeSettingsTableWidget->itemAt(row, 1)->setBackgroundColor(color);
 //}
 
-Q3DSurface* MainWindow::init_graph(QSurface3DSeries* series)
+void MainWindow::init_graph()
 {
 	//QStringList labels;
 	//labels.push_back(QString("LABEL"));
 	//QValue3DAxis axis_y, axis_z;
 	//axis_x.setLabels(labels);
 
-    auto new_graph = new Q3DSurface();
-    new_graph->setAxisX(new QValue3DAxis);
-    new_graph->setAxisY(new QValue3DAxis);
-    new_graph->setAxisZ(new QValue3DAxis);
+    m_graph = new Q3DSurface();
+    m_graph->setAxisX(new QValue3DAxis);
+    m_graph->setAxisY(new QValue3DAxis);
+    m_graph->setAxisZ(new QValue3DAxis);
 
-    new_graph->axisX()->setRange(m_PdeSettings->minX, m_PdeSettings->maxX);
-    new_graph->axisY()->setRange(m_PdeSettings->minY, m_PdeSettings->maxY);
+    m_graph->axisX()->setRange(m_PdeSettings->minX, m_PdeSettings->maxX);
+    m_graph->axisY()->setRange(m_PdeSettings->minY, m_PdeSettings->maxY);
     //new_graph->axisZ()->setRange(0.0f, 1.0f);
 
-    new_graph->axisX()->setLabelFormat("%.2f");
-    new_graph->axisY()->setLabelFormat("%.2f");
-    new_graph->axisZ()->setLabelFormat("%.2f");
+    m_graph->axisX()->setLabelFormat("%.2f");
+    m_graph->axisY()->setLabelFormat("%.2f");
+    m_graph->axisZ()->setLabelFormat("%.2f");
 
-    new_graph->axisX()->setTitle("Y");
-    new_graph->axisX()->setTitleVisible(true);
-    new_graph->axisY()->setTitle("Z");
-    new_graph->axisY()->setTitleVisible(true);
-    new_graph->axisZ()->setTitle("X");
-    new_graph->axisZ()->setTitleVisible(true);
+    m_graph->axisX()->setTitle("Y");
+    m_graph->axisX()->setTitleVisible(true);
+    m_graph->axisY()->setTitle("Z");
+    m_graph->axisY()->setTitleVisible(true);
+    m_graph->axisZ()->setTitle("X");
+    m_graph->axisZ()->setTitleVisible(true);
 	//m_graph->axisZ()->setReversed(true);
 
-    new_graph->addSeries(series);
+    m_graph->addSeries(m_series);
 
     QLinearGradient gr;
     gr.setColorAt(0.0, Qt::black);
-    gr.setColorAt(0.2, Qt::blue);
+    gr.setColorAt(0.4, Qt::blue);
     gr.setColorAt(0.8, Qt::red);
     gr.setColorAt(1.0, Qt::yellow);
 
-    new_graph->seriesList().at(0)->setBaseGradient(gr);
-    new_graph->seriesList().at(0)->setColorStyle(Q3DTheme::ColorStyleRangeGradient);
+    m_graph->seriesList().at(0)->setBaseGradient(gr);
+    m_graph->seriesList().at(0)->setColorStyle(Q3DTheme::ColorStyleRangeGradient);
 
-    return new_graph;
+    m_GraphWidget = QWidget::createWindowContainer(m_graph);
+    ui.horizontalLayout->addWidget(m_GraphWidget, Qt::AlignLeft);  // but still aligns to the right. why?..
 }
 
 void MainWindow::init_PdeSettingsTableWidget(QVariantMap pde_settings_map)
 {
 	ui.PdeSettingsTableWidget->verticalHeader()->setVisible(false);
-	ui.PdeSettingsTableWidget->setColumnWidth(0, 80);
-    ui.PdeSettingsTableWidget->setColumnWidth(1, 165);
+    ui.PdeSettingsTableWidget->setColumnWidth(0, 90);
+    //ui.PdeSettingsTableWidget->setColumnWidth(1, 165);
 	ui.PdeSettingsTableWidget->setRowCount(0);
 	int n_row = 0;
 	for (QVariantMap::const_iterator iter = pde_settings_map.begin(); iter != pde_settings_map.end(); ++iter)

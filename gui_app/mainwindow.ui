@@ -13,6 +13,9 @@
   <property name="windowTitle">
    <string>Pde solver</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">font: 75 9pt &quot;Noto Sans&quot;;</string>
+  </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QHBoxLayout" name="horizontalLayout_2">
     <item>

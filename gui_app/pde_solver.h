@@ -11,7 +11,6 @@
 #include <sys/types.h>
 
 #include "pde_settings.h"
-//struct PdeSettings;
 
 class PdeSolver
 {
@@ -20,6 +19,7 @@ public:
 	~PdeSolver();
 
 	std::shared_ptr<QVector<QtDataVisualization::QSurfaceDataArray*>> solve(const PdeSettings& pde_settings);
+
 private:
 
     QtDataVisualization::QSurfaceDataArray* get_initial_array(const PdeSettings& pde_settings);

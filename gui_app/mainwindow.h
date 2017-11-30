@@ -45,7 +45,7 @@ public slots:
     //void PdeSettingsTableWidgetCellClickedSlot(int, int);
 
 private:
-    QtDataVisualization::Q3DSurface* init_graph(QtDataVisualization::QSurface3DSeries* series);
+    void init_graph();
     void init_PdeSettingsTableWidget(QVariantMap pde_settings_map);
 	std::shared_ptr<PdeSettings> init_pde_settings(QString pde_settings_filename);
 

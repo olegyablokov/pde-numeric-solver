@@ -1,8 +1,7 @@
 BUGS:
-    memory leak	when recalculating the graph data;
+	memory leak	when recalculating the graph data;
 	some graphs don't look as they are supposed to;
 	(sometimes) little graph shivering. why?..
-	pde_settings.json not used (but it should be);
 
 FEATURES:
     add explicit calculation of pde;
