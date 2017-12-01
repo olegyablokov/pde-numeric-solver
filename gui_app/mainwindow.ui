@@ -46,6 +46,12 @@
           <height>0</height>
          </size>
         </property>
+        <property name="maximumSize">
+         <size>
+          <width>300</width>
+          <height>16777215</height>
+         </size>
+        </property>
         <property name="layoutDirection">
          <enum>Qt::LeftToRight</enum>
         </property>
@@ -106,6 +112,9 @@
          </item>
         </layout>
        </widget>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="GraphLayout"/>
       </item>
      </layout>
     </item>

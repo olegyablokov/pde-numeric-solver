@@ -33,7 +33,7 @@ public:
 	float minY = -10.0f; 
 	float maxY = 10.0f; 
 	float minT = 0.0f; 
-    float maxT = 0.5f;
+    float maxT = 0.05f;
 
 	float stepX;
 	float stepY;

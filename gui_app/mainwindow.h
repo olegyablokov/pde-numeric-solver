@@ -10,6 +10,7 @@
 #include <QtDataVisualization/QSurfaceDataProxy>
 #include <QTimer>
 #include <QTableWidgetItem>
+#include <QLabel>
 
 #include <QJsonValue>
 #include <QJsonArray>
@@ -39,13 +40,17 @@ class MainWindow : public QMainWindow
 
 public:
 	MainWindow(QWidget *parent = Q_NULLPTR);
+    ~MainWindow();
+
+    void start();
 
     QWidget* m_GraphWidget;
 
 public slots:
-	void updateTimeSlice();
-	void EvaluatePushButtonClicked();
-    void EquationComboBoxCurrentIndexChangedSlot(QString);
+    void update_TimeSlice();
+    void EvaluatePushButton_clicked();
+    void EquationComboBoxCurrentIndex_changed(QString);
+    void GraphSlider_changed(int);
     //void PdeSettingsTableWidgetCellClickedSlot(int, int);
 
 private:
@@ -68,7 +73,10 @@ private:
 
 	QtDataVisualization::QSurface3DSeries *m_series;
 	QtDataVisualization::Q3DSurface *m_graph;
-	QTimer *m_timer;
+    QTimer* m_timer;
+    QHBoxLayout* m_GraphSliderLayout;
+    QLabel* m_GraphSliderLabel;
+    QSlider* m_GraphSlider;
 };
 
 #endif //MAIN_WINDOW_H

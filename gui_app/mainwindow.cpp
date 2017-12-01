@@ -4,6 +4,7 @@
 
 #include <QtCore/qmath.h>
 #include <QScriptEngine>
+#include <QSlider>
 
 using namespace QtDataVisualization;
 
@@ -19,14 +20,24 @@ MainWindow::MainWindow(QWidget *parent)
     init_graph();
 	init_PdeSettingsTableWidget(m_PdeSettings->toQVariantMap());
     init_EquationComboBox();
+}
 
+MainWindow::~MainWindow()
+{
+    delete m_GraphSlider;
+    delete m_GraphSliderLabel;
+    delete m_GraphSliderLayout;
+}
+
+void MainWindow::start()
+{
     //now calculate pde with default settings
     m_PdeSolver = new PdeSolverHeatEquation();  // std::make_shared<PdeSolverHeatEquation>
-	m_graph_data = m_PdeSolver->solve(*m_PdeSettings);
+    m_graph_data = m_PdeSolver->solve(*m_PdeSettings);
 
     //connect(ui.PdeSettingsTableWidget, SIGNAL(cellClicked(int, int)), this, SLOT(PdeSettingsTableWidgetCellClickedSlot(int, int)));
-	connect(ui.EvaluatePushButton, SIGNAL(clicked()), this, SLOT(EvaluatePushButtonClicked()));
-	connect(m_timer, SIGNAL(timeout()), this, SLOT(updateTimeSlice()));
+    connect(ui.EvaluatePushButton, SIGNAL(clicked()), this, SLOT(EvaluatePushButton_clicked()));
+    connect(m_timer, SIGNAL(timeout()), this, SLOT(update_TimeSlice()));
     m_timer->start(m_graph_update_frequency);
 }
 
@@ -91,8 +102,35 @@ void MainWindow::init_graph()
     m_graph->seriesList().at(0)->setBaseGradient(gr);
     m_graph->seriesList().at(0)->setColorStyle(Q3DTheme::ColorStyleRangeGradient);
 
+    m_GraphSliderLabel = new QLabel("Update frequency: " + QString::number(m_graph_update_frequency));
+    m_GraphSliderLabel->setMinimumWidth(200);
+    m_GraphSlider = new QSlider(Qt::Horizontal);
+    m_GraphSlider->setMinimum(10);
+    m_GraphSlider->setMaximum(1000);
+    m_GraphSlider->setSingleStep(10);
+    m_GraphSlider->setValue(m_graph_update_frequency);
+
+    m_GraphSliderLayout = new QHBoxLayout();
+    m_GraphSliderLayout->addWidget(m_GraphSliderLabel);
+    m_GraphSliderLayout->addWidget(m_GraphSlider);
+
     m_GraphWidget = QWidget::createWindowContainer(m_graph);
-    ui.horizontalLayout->addWidget(m_GraphWidget, Qt::AlignLeft);  // but still aligns to the right. why?..
+
+    ui.GraphLayout->addWidget(m_GraphWidget);
+    ui.GraphLayout->addLayout(m_GraphSliderLayout);
+
+    connect(m_GraphSlider, SIGNAL(actionTriggered(int)), this, SLOT(GraphSlider_changed(int)));
+}
+
+void MainWindow::GraphSlider_changed(int action)
+{
+    if (action == QAbstractSlider::SliderMove)
+    {
+        m_graph_update_frequency = m_GraphSlider->value();
+        m_timer->stop();
+        m_timer->start(m_graph_update_frequency);
+        m_GraphSliderLabel->setText("Update frequency: " + QString::number(m_graph_update_frequency));
+    }
 }
 
 void MainWindow::init_PdeSettingsTableWidget(QVariantMap pde_settings_map)
@@ -160,10 +198,10 @@ void MainWindow::init_EquationComboBox()
 {
     ui.EquationComboBox->addItem("Heat equation");
     ui.EquationComboBox->addItem("Wave equation");
-    connect(ui.EquationComboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(EquationComboBoxCurrentIndexChangedSlot(QString)));
+    connect(ui.EquationComboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(EquationComboBoxCurrentIndex_changed(QString)));
 }
 
-void MainWindow::EquationComboBoxCurrentIndexChangedSlot(QString value)
+void MainWindow::EquationComboBoxCurrentIndex_changed(QString value)
 {
     if (value == "Heat equation")
     {
@@ -215,7 +253,7 @@ QSurfaceDataArray* newSurfaceDataArrayFromSource(QSurfaceDataArray& source_surfa
 	return newArray;
 }
 
-void MainWindow::updateTimeSlice()
+void MainWindow::update_TimeSlice()
 {
 	if (m_current_time >= m_PdeSettings->countT)
 		m_current_time = 0;
@@ -247,7 +285,7 @@ void MainWindow::updateTimeSlice()
 //    }
 //}
 
-void MainWindow::EvaluatePushButtonClicked()
+void MainWindow::EvaluatePushButton_clicked()
 {
 	m_timer->stop();
     clearData();
