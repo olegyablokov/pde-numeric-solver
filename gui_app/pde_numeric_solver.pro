@@ -14,19 +14,19 @@ MOC_DIR = $${DESTDIR}/.moc
 RCC_DIR = $${DESTDIR}/.rcc
 UI_DIR = $${DESTDIR}/.ui
 
-HEADERS += pde_settings.h \
-    mainwindow.h \
-    pde_solver_heat_equation.h \
-    pde_solver_wave_equation.h \
-    math_module.h \
-    pde_solver_base.h
+HEADERS += mainwindow.h \
+	../pde_solver/pde_solver_heat_equation.h \
+	../pde_solver/pde_solver_wave_equation.h \
+	../math_module/math_module.h \
+	../pde_solver/pde_solver_base.h \
+	../pde_solver/pde_settings.h
 SOURCES += main.cpp \
     mainwindow.cpp \
-    pde_settings.cpp \
-    pde_solver_heat_equation.cpp \
-    pde_solver_wave_equation.cpp \
-    math_module.cpp \
-    pde_solver_base.cpp
+	../pde_solver/pde_settings.cpp \
+	../pde_solver/pde_solver_heat_equation.cpp \
+	../pde_solver/pde_solver_wave_equation.cpp \
+	../pde_solver/pde_solver_base.cpp \
+	../math_module/math_module.cpp
 FORMS += mainwindow.ui
 
 #_______________________________________

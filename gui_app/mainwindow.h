@@ -27,12 +27,12 @@
 #include <memory>
 #include <string>
 
-#include "pde_settings.h"
+#include "../pde_solver/pde_settings.h"
 #include "ui_mainwindow.h"
 
-#include "pde_solver_base.h"
-#include "pde_solver_heat_equation.h"
-#include "pde_solver_wave_equation.h"
+#include "../pde_solver/pde_solver_base.h"
+#include "../pde_solver/pde_solver_heat_equation.h"
+#include "../pde_solver/pde_solver_wave_equation.h"
 
 class MainWindow : public QMainWindow
 {
