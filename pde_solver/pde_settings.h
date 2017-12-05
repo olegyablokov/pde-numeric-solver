@@ -5,6 +5,7 @@
 #include <QScriptEngine>
 #include <QVector>
 #include <QString>
+#include <QToolTip>
 
 #include <memory>
 #include <functional>

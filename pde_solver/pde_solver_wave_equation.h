@@ -9,7 +9,7 @@ public:
     PdeSolverWaveEquation();
     virtual ~PdeSolverWaveEquation();
 
-    virtual GraphData_t solve(const PdeSettings& set);
+    virtual GraphSolution_t solve(const PdeSettings& set);
 
 protected:
     PdeSolverBase::GraphDataSlice_t alternating_direction_method(const PdeSettings& set,

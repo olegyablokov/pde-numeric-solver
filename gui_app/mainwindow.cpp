@@ -32,13 +32,13 @@ MainWindow::~MainWindow()
 void MainWindow::start()
 {
     //now calculate pde with default settings
-    m_PdeSolver = new PdeSolverHeatEquation();  // std::make_shared<PdeSolverHeatEquation>
-    m_graph_data = m_PdeSolver->solve(*m_PdeSettings);
+    m_PdeSolver = new PdeSolverHeatEquation();
+    m_graph_solution = m_PdeSolver->solve(*m_PdeSettings);
 
     //connect(ui.PdeSettingsTableWidget, SIGNAL(cellClicked(int, int)), this, SLOT(PdeSettingsTableWidgetCellClickedSlot(int, int)));
     connect(ui.EvaluatePushButton, SIGNAL(clicked()), this, SLOT(EvaluatePushButton_clicked()));
     connect(m_timer, SIGNAL(timeout()), this, SLOT(update_TimeSlice()));
-    m_timer->start(m_graph_update_frequency);
+    m_timer->start(m_graph_update_time_step);
 }
 
 //void MainWindow::PdeSettingsTableWidgetCellClickedSlot(int row, int column)
@@ -102,13 +102,13 @@ void MainWindow::init_graph()
     m_graph->seriesList().at(0)->setBaseGradient(gr);
     m_graph->seriesList().at(0)->setColorStyle(Q3DTheme::ColorStyleRangeGradient);
 
-    m_GraphSliderLabel = new QLabel("Update frequency: " + QString::number(m_graph_update_frequency));
+    m_GraphSliderLabel = new QLabel("Update frequency: " + QString::number(m_graph_update_time_step));
     m_GraphSliderLabel->setMinimumWidth(200);
     m_GraphSlider = new QSlider(Qt::Horizontal);
     m_GraphSlider->setMinimum(10);
     m_GraphSlider->setMaximum(1000);
     m_GraphSlider->setSingleStep(10);
-    m_GraphSlider->setValue(m_graph_update_frequency);
+    m_GraphSlider->setValue(m_graph_update_time_step);
 
     m_GraphSliderLayout = new QHBoxLayout();
     m_GraphSliderLayout->addWidget(m_GraphSliderLabel);
@@ -116,8 +116,12 @@ void MainWindow::init_graph()
 
     m_GraphWidget = QWidget::createWindowContainer(m_graph);
 
+    //m_GraphOccuracyLabel = new QLabel("Occuracy: " + QString::number(m_graph_update_time_step));
+    //m_GraphOccuracyLabel->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
+
     ui.GraphLayout->addWidget(m_GraphWidget);
     ui.GraphLayout->addLayout(m_GraphSliderLayout);
+    //ui.GraphLayout->addWidget(m_GraphOccuracyLabel);
 
     connect(m_GraphSlider, SIGNAL(actionTriggered(int)), this, SLOT(GraphSlider_changed(int)));
 }
@@ -126,18 +130,16 @@ void MainWindow::GraphSlider_changed(int action)
 {
     if (action == QAbstractSlider::SliderMove)
     {
-        m_graph_update_frequency = m_GraphSlider->value();
+        m_graph_update_time_step = m_GraphSlider->value();
         m_timer->stop();
-        m_timer->start(m_graph_update_frequency);
-        m_GraphSliderLabel->setText("Update frequency: " + QString::number(m_graph_update_frequency));
+        m_timer->start(m_graph_update_time_step);
+        m_GraphSliderLabel->setText("Update frequency: " + QString::number(m_graph_update_time_step));
     }
 }
 
 void MainWindow::init_PdeSettingsTableWidget(QVariantMap pde_settings_map)
 {
 	ui.PdeSettingsTableWidget->verticalHeader()->setVisible(false);
-    ui.PdeSettingsTableWidget->setColumnWidth(0, 90);
-    //ui.PdeSettingsTableWidget->setColumnWidth(1, 165);
 	ui.PdeSettingsTableWidget->setRowCount(0);
 	int n_row = 0;
 	for (QVariantMap::const_iterator iter = pde_settings_map.begin(); iter != pde_settings_map.end(); ++iter)
@@ -156,7 +158,8 @@ void MainWindow::init_PdeSettingsTableWidget(QVariantMap pde_settings_map)
 		++n_row;
 	}
 
-	ui.PdeSettingsTableWidget->repaint();
+    //ui.PdeSettingsTableWidget->resizeRowsToContents();
+    ui.PdeSettingsTableWidget->resizeColumnsToContents();
 }
 
 std::shared_ptr<PdeSettings> MainWindow::init_pde_settings(QString pde_settings_filename)
@@ -217,19 +220,19 @@ void MainWindow::EquationComboBoxCurrentIndex_changed(QString value)
 
 void clearSurfaceDataArray(QSurfaceDataArray& array)
 {
-  for (int j(0); j < array.size(); j++) delete array[j];
-  array.clear();
+    for (int j(0); j < array.size(); j++) delete array[j];
+    array.clear();
 }
 
 void MainWindow::clearData()
 {
-    for (int i(0); i < m_graph_data.first.size(); i++)
+    for (int i(0); i < m_graph_solution.graph_data.first.size(); i++)
     {
-        QSurfaceDataArray* array = m_graph_data.first.at(i);
+        QSurfaceDataArray* array = m_graph_solution.graph_data.first.at(i);
         clearSurfaceDataArray(*array);
         delete array;
     }
-    m_graph_data.first.erase(m_graph_data.first.begin(), m_graph_data.first.end());
+    m_graph_solution.graph_data.first.erase(m_graph_solution.graph_data.first.begin(), m_graph_solution.graph_data.first.end());
 }
 
 QSurfaceDataArray* newSurfaceDataArrayFromSource(QSurfaceDataArray& source_surface_data_array,
@@ -257,11 +260,11 @@ void MainWindow::update_TimeSlice()
 {
 	if (m_current_time >= m_PdeSettings->countT)
 		m_current_time = 0;
-    auto qsurface_data_array = m_graph_data.first.at(m_current_time);
+    auto qsurface_data_array = m_graph_solution.graph_data.first.at(m_current_time);
 	auto modifier = [](QSurfaceDataItem item) -> void { item.position(); };
 	
     m_series->dataProxy()->resetArray(newSurfaceDataArrayFromSource(*qsurface_data_array, modifier));
-
+    //m_GraphOccuracyLabel->setText("Occuracy : " + QString::number(m_graph_solution.occuracy[m_current_time]));
 	++m_current_time;
 }
 
@@ -297,8 +300,8 @@ void MainWindow::EvaluatePushButton_clicked()
 		map.insert(ui.PdeSettingsTableWidget->item(i, 0)->text(), ui.PdeSettingsTableWidget->item(i, 1)->text());
 	m_PdeSettings->reset(map);
 	
-	m_graph_data = m_PdeSolver->solve(*m_PdeSettings);
+    m_graph_solution = m_PdeSolver->solve(*m_PdeSettings);
 	
 	m_current_time = 0;
-	m_timer->start(m_graph_update_frequency);
+    m_timer->start(m_graph_update_time_step);
 }

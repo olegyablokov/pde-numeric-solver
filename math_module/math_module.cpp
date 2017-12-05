@@ -1,4 +1,8 @@
 #include "math_module.h"
+#include <memory>
+#include <functional>
+#include <cubature.h>
+#include <cmath>
 
 void MathModule::solve_tridiagonal_equation(std::vector<float>& a, std::vector<float>& b, std::vector<float>& c, std::vector<float>& d, int n) {
     /*
@@ -49,4 +53,35 @@ void MathModule::solve_tridiagonal_equation(std::vector<float>& a, std::vector<f
     for (int i = n; i-- > 0;) {
         d[i] -= c[i] * d[i + 1];
     }
+}
+
+struct fdata_for_heat_equation
+{
+    QVector2D x1;
+    float t;
+    PdeSettings set;
+};
+
+int solve_heat_equation_explicitly_fun(unsigned ndim, const double *x, void *fdata_, unsigned fdim, double *fval)
+{
+    auto fdata = static_cast<fdata_for_heat_equation*>(fdata_);
+    if (ndim != 3 || fdim != 1) return -1;
+
+    QVector2D x_vec(*x, *(x + 1));
+
+    *fval = (1 / std::pow(4 * M_PI * std::pow(fdata->set.c, 2) * fdata->t, 3/2)) * fdata->set.V1(x_vec) * std::exp(-std::pow((x_vec - fdata->x1).length(), 2) / (4 * std::pow(fdata->set.c, 2) * fdata->t));
+    return 0;
+}
+
+float MathModule::solve_heat_equation_explicitly(QVector2D x, float t, const PdeSettings& set)
+{
+    double xmin[2] = {set.minX, set.minY}, xmax[2] = {set.maxX, set.maxY}, val, err;
+
+    fdata_for_heat_equation fdata = {x, t, set};
+
+    if (hcubature(1, solve_heat_equation_explicitly_fun, &fdata, 3, xmin, xmax, 0, 0, 1e-1, ERROR_INDIVIDUAL, &val, &err))
+    {
+        throw("Error while calling hcubature");
+    };
+    return val;
 }

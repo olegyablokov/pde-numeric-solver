@@ -9,7 +9,7 @@ PdeSettings::PdeSettings()
     stepY = (maxY - minY) / float(countY);
     stepT = (maxT - minT) / float(countT);
 
-    m_ScriptEngine = new QScriptEngine();
+    //m_ScriptEngine = new QScriptEngine();
 }
 
 PdeSettings::PdeSettings(QVariantMap& map)

@@ -17,6 +17,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QVariant>
+#include <QToolTip>
 #include <iostream>
 #include <fstream>
 #include <QFile>
@@ -68,14 +69,15 @@ private:
 	int m_current_time = 0;
 	//QtDataVisualization::QSurfaceDataProxy m_SurfaceDataProxy;
     PdeSolverBase* m_PdeSolver;  // std::shared_ptr<PdeSolver>
-    PdeSolverBase::GraphData_t m_graph_data;
-	int m_graph_update_frequency = 40;  // in ms
+    PdeSolverBase::GraphSolution_t m_graph_solution;
+    int m_graph_update_time_step = 40;  // in ms
 
 	QtDataVisualization::QSurface3DSeries *m_series;
 	QtDataVisualization::Q3DSurface *m_graph;
     QTimer* m_timer;
     QHBoxLayout* m_GraphSliderLayout;
     QLabel* m_GraphSliderLabel;
+    QLabel* m_GraphOccuracyLabel;
     QSlider* m_GraphSlider;
 };
 

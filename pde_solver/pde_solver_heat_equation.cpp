@@ -1,5 +1,5 @@
 #include "pde_solver_heat_equation.h"
-#include "math_module.h"
+#include "../math_module/math_module.h"
 
 using namespace QtDataVisualization;
 
@@ -35,7 +35,6 @@ PdeSolverBase::GraphDataSlice_t PdeSolverHeatEquation::alternating_direction_met
     else throw("Wrong stencil");
 
     GraphDataSlice_t cur_graph_data_slice(new QSurfaceDataArray(), new QSurfaceDataArray());
-    //*cur_graph_data.second = *prev_graph_data.second;
 
     std::vector<float> a(max_index1, -set.c * set.c / step1 / step1);
     std::vector<float> b(max_index1, 2 / set.stepT + 2 * set.c * set.c / step1 / step1);
@@ -51,9 +50,9 @@ PdeSolverBase::GraphDataSlice_t PdeSolverHeatEquation::alternating_direction_met
         {
             if (stencil == 'x')
             {
-                u1 = index1 > 0 ? set.c * set.c / step2 / step2 * prev_graph_data_slice.first->at(index2)->at(index1 - 1).y() : 0;
-                u2 = (2 / set.stepT - 2 * set.c * set.c / step2 / step2) * prev_graph_data_slice.first->at(index2)->at(index1).y();
-                u3 = index1 < max_index1 - 1 ? set.c * set.c / step2 / step2 * prev_graph_data_slice.first->at(index2)->at(index1 + 1).y() : 0;
+                u1 = index2 > 0 ? set.c * set.c / step2 / step2 * prev_graph_data_slice.first->at(index1)->at(index2 - 1).y() : 0;
+                u2 = (2 / set.stepT - 2 * set.c * set.c / step2 / step2) * prev_graph_data_slice.first->at(index1)->at(index2).y();
+                u3 = index2 < max_index2 - 1 ? set.c * set.c / step2 / step2 * prev_graph_data_slice.first->at(index1)->at(index2 + 1).y() : 0;
             }
             else if (stencil == 'y')
             {
@@ -78,12 +77,17 @@ PdeSolverBase::GraphDataSlice_t PdeSolverHeatEquation::alternating_direction_met
     return cur_graph_data_slice;
 }
 
-PdeSolverBase::GraphData_t PdeSolverHeatEquation::solve(const PdeSettings& set)
+PdeSolverBase::GraphSolution_t PdeSolverHeatEquation::solve(const PdeSettings& set)
 {
-    GraphData_t graph_data;
+    GraphSolution_t solution;
+
     GraphDataSlice_t init_slice = get_initial_conditions(set);
-    graph_data.first.push_back(init_slice.first);
-    graph_data.second.push_back(init_slice.second);
+    solution.graph_data.first.push_back(init_slice.first);
+    solution.graph_data.second.push_back(init_slice.second);
+
+//    //explicit solution
+//    double val = MathModule::solve_heat_equation_explicitly(QVector2D(1, 1), set.minT, set);
+//    solution.occuracy.push_back(val);
 
     GraphDataSlice_t cur_graph_data_slice;
     GraphDataSlice_t half_new_graph_data_slice;
@@ -91,17 +95,21 @@ PdeSolverBase::GraphData_t PdeSolverHeatEquation::solve(const PdeSettings& set)
     int t_count = 1;
     for (float t_val = set.minT + set.stepT; t_val < set.maxT; t_val += set.stepT)
     {
-        cur_graph_data_slice.first = graph_data.first.at(t_count - 1);
-        cur_graph_data_slice.second = graph_data.second.at(t_count - 1);
+        cur_graph_data_slice.first = solution.graph_data.first.at(t_count - 1);
+        cur_graph_data_slice.second = solution.graph_data.second.at(t_count - 1);
 
         half_new_graph_data_slice = alternating_direction_method(set, cur_graph_data_slice, 'x');
         new_graph_data_slice = alternating_direction_method(set, half_new_graph_data_slice, 'y');
 
-        graph_data.first.push_back(new_graph_data_slice.first);
-        graph_data.second.push_back(new_graph_data_slice.second);
+        solution.graph_data.first.push_back(new_graph_data_slice.first);
+        solution.graph_data.second.push_back(new_graph_data_slice.second);
+
+//        //explicit solution
+//        double val = MathModule::solve_heat_equation_explicitly(QVector2D(1, 1), t_val, set);
+//        solution.occuracy.push_back(val);
 
         ++t_count;
     }
 
-    return graph_data;
+    return solution;
 }

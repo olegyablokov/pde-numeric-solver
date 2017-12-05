@@ -35,21 +35,21 @@
       <item>
        <widget class="QGroupBox" name="groupBox">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="minimumSize">
          <size>
-          <width>100</width>
+          <width>250</width>
           <height>0</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>300</width>
-          <height>16777215</height>
+          <width>250</width>
+          <height>10000</height>
          </size>
         </property>
         <property name="layoutDirection">
@@ -66,31 +66,22 @@
         </property>
         <layout class="QVBoxLayout" name="verticalLayout">
          <item>
-          <widget class="QGroupBox" name="groupBox_2">
-           <property name="font">
-            <font>
-             <family>Noto Sans</family>
-             <pointsize>9</pointsize>
-             <weight>9</weight>
-             <italic>false</italic>
-             <bold>false</bold>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true"/>
-           </property>
-           <property name="title">
-            <string/>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_2">
-            <item>
-             <widget class="QComboBox" name="EquationComboBox"/>
-            </item>
-           </layout>
-          </widget>
+          <widget class="QComboBox" name="EquationComboBox"/>
          </item>
          <item>
           <widget class="QTableWidget" name="PdeSettingsTableWidget">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>10</width>
+             <height>10</height>
+            </size>
+           </property>
            <column>
             <property name="text">
              <string>Key</string>
@@ -105,6 +96,9 @@
          </item>
          <item>
           <widget class="QPushButton" name="EvaluatePushButton">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Evaluate</string>
            </property>
@@ -126,7 +120,7 @@
      <x>0</x>
      <y>0</y>
      <width>1178</width>
-     <height>29</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>
