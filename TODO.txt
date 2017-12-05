@@ -2,9 +2,10 @@ BUGS:
 	(!IMPORTANT!) wave equation solution is unstable (why?);
 	(!IMPORTANT!) memory leak when recalculating the graph data;
 	somehow remove the empty place at the top of group boxes (Qt bug, meh);
+	Cannot declare a QScriptEngine instance in the PdeSettings class (why?);
 
 FEATURES:
 	add explicit calculation of pde (maybe add some graphs for numerical soulution occuracy?);
 	add some tooltips (especially for QTable items);
-	solve graphs in a special thread;
-	add a progress bar indicating the solution progress (requires a special thread for the graph solution);
+	add a slider for a current graph time regulation;
+	add "play"/"stop" buttons for the graph;

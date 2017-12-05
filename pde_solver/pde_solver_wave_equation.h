@@ -5,15 +5,17 @@
 
 class PdeSolverWaveEquation : public PdeSolverBase
 {
+    Q_OBJECT
+
 public:
     PdeSolverWaveEquation();
     virtual ~PdeSolverWaveEquation();
 
-    virtual GraphSolution_t solve(const PdeSettings& set);
+public slots:
+    virtual void get_solution(const PdeSettings& set);
 
 protected:
-    PdeSolverBase::GraphDataSlice_t alternating_direction_method(const PdeSettings& set,
-                                                                 const PdeSolverBase::GraphDataSlice_t& prev_graph_data_slice, char stencil);
+    GraphDataSlice_t alternating_direction_method(const PdeSettings& set, const GraphDataSlice_t& prev_graph_data_slice, char stencil);
 };
 
 #endif // PDE_SOLVER_WAVE_EQUATION_H

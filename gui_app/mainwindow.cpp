@@ -8,10 +8,21 @@
 
 using namespace QtDataVisualization;
 
+Q_DECLARE_METATYPE(PdeSolverBase::GraphDataSlice_t);
+Q_DECLARE_METATYPE(PdeSolverBase::GraphData_t);
+Q_DECLARE_METATYPE(PdeSolverBase::GraphSolution_t);
+Q_DECLARE_METATYPE(PdeSettings);
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), m_timer(new QTimer()), m_series(new QSurface3DSeries())
 {
     ui.setupUi(this);
+
+//    qRegisterMetaType<PdeSolverBase::GraphDataSlice_t>();
+//    qRegisterMetaType<PdeSolverBase::GraphData_t>();
+//    qRegisterMetaType<PdeSolverBase::GraphSolution_t>();
+//    qRegisterMetaType<PdeSettings>();
+
     //setStyleSheet("QGroupBox{padding-top:15px; margin-top:-15px}");
 
 	m_pde_settings_filename = "pde_settings.json";
@@ -24,6 +35,8 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    m_GraphThread.quit();
+    m_GraphThread.deleteLater();
     delete m_GraphSlider;
     delete m_GraphSliderLabel;
     delete m_GraphSliderLayout;
@@ -31,14 +44,15 @@ MainWindow::~MainWindow()
 
 void MainWindow::start()
 {
-    //now calculate pde with default settings
-    m_PdeSolver = new PdeSolverHeatEquation();
-    m_graph_solution = m_PdeSolver->solve(*m_PdeSettings);
-
-    //connect(ui.PdeSettingsTableWidget, SIGNAL(cellClicked(int, int)), this, SLOT(PdeSettingsTableWidgetCellClickedSlot(int, int)));
     connect(ui.EvaluatePushButton, SIGNAL(clicked()), this, SLOT(EvaluatePushButton_clicked()));
     connect(m_timer, SIGNAL(timeout()), this, SLOT(update_TimeSlice()));
-    m_timer->start(m_graph_update_time_step);
+
+    m_GraphThread.start();
+    change_pde_solver("Heat equation");
+
+    m_PdeSolver->solve(*m_PdeSettings);
+
+    //connect(ui.PdeSettingsTableWidget, SIGNAL(cellClicked(int, int)), this, SLOT(PdeSettingsTableWidgetCellClickedSlot(int, int)));
 }
 
 //void MainWindow::PdeSettingsTableWidgetCellClickedSlot(int row, int column)
@@ -199,23 +213,48 @@ std::shared_ptr<PdeSettings> MainWindow::init_pde_settings(QString pde_settings_
 
 void MainWindow::init_EquationComboBox()
 {
-    ui.EquationComboBox->addItem("Heat equation");
     ui.EquationComboBox->addItem("Wave equation");
-    connect(ui.EquationComboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(EquationComboBoxCurrentIndex_changed(QString)));
+    ui.EquationComboBox->addItem("Heat equation");
+    connect(ui.EquationComboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(change_pde_solver(QString)));
 }
 
-void MainWindow::EquationComboBoxCurrentIndex_changed(QString value)
+void MainWindow::graph_solution_generated(PdeSolverBase::GraphSolution_t solution)
+{
+    qDebug() << "MainWindow::graph_solution_generated invoked";
+    m_timer->stop();
+    //clearData();
+
+    m_graph_data = solution.graph_data;
+    *m_PdeSettings = solution.set;
+
+    qDebug() << "Update timer started";
+    m_current_time = 0;
+    m_timer->start(m_graph_update_time_step);
+
+    ui.EvaluatePushButton->setDisabled(false);
+    ui.EquationComboBox->setDisabled(false);
+}
+
+void MainWindow::solution_progress_updated(QString msg, int value)
+{
+    ui.GraphSolutionProgressBar->setValue(value);
+    ui.GraphSolutionProgressLabel->setText(msg);
+}
+
+void MainWindow::change_pde_solver(QString value)
 {
     if (value == "Heat equation")
     {
-        delete m_PdeSolver;
-        m_PdeSolver = new PdeSolverHeatEquation();
+        m_PdeSolver.reset(new PdeSolverHeatEquation());
     }
     else if (value == "Wave equation")
     {
-        delete m_PdeSolver;
-        m_PdeSolver = new PdeSolverWaveEquation();
+        m_PdeSolver.reset(new PdeSolverWaveEquation());
     }
+    m_PdeSolver->moveToThread(&m_GraphThread);
+
+    connect(m_PdeSolver.get(), SIGNAL(solution_progress_update(QString, int)), this, SLOT(solution_progress_updated(QString, int)), Qt::QueuedConnection);
+    connect(m_PdeSolver.get(), SIGNAL(solution_generated(PdeSolverBase::GraphSolution_t)), this, SLOT(graph_solution_generated(PdeSolverBase::GraphSolution_t)), Qt::QueuedConnection);
 }
 
 void clearSurfaceDataArray(QSurfaceDataArray& array)
@@ -226,13 +265,13 @@ void clearSurfaceDataArray(QSurfaceDataArray& array)
 
 void MainWindow::clearData()
 {
-    for (int i(0); i < m_graph_solution.graph_data.first.size(); i++)
+    for (int i(0); i < m_graph_data.first.size(); i++)
     {
-        QSurfaceDataArray* array = m_graph_solution.graph_data.first.at(i);
+        QSurfaceDataArray* array = m_graph_data.first.at(i);
         clearSurfaceDataArray(*array);
         delete array;
     }
-    m_graph_solution.graph_data.first.erase(m_graph_solution.graph_data.first.begin(), m_graph_solution.graph_data.first.end());
+    m_graph_data.first.erase(m_graph_data.first.begin(), m_graph_data.first.end());
 }
 
 QSurfaceDataArray* newSurfaceDataArrayFromSource(QSurfaceDataArray& source_surface_data_array,
@@ -260,7 +299,7 @@ void MainWindow::update_TimeSlice()
 {
 	if (m_current_time >= m_PdeSettings->countT)
 		m_current_time = 0;
-    auto qsurface_data_array = m_graph_solution.graph_data.first.at(m_current_time);
+    auto qsurface_data_array = m_graph_data.first.at(m_current_time);
 	auto modifier = [](QSurfaceDataItem item) -> void { item.position(); };
 	
     m_series->dataProxy()->resetArray(newSurfaceDataArrayFromSource(*qsurface_data_array, modifier));
@@ -290,18 +329,14 @@ void MainWindow::update_TimeSlice()
 
 void MainWindow::EvaluatePushButton_clicked()
 {
-	m_timer->stop();
-    clearData();
+    ui.EvaluatePushButton->setDisabled(true);
+    ui.EquationComboBox->setDisabled(true);
 
-	//reading from ui.PdeSettingsTableWidget
-	QVariantMap map;
-	int rowCount = ui.PdeSettingsTableWidget->rowCount();
-	for (int i = 0; i < rowCount; ++i)
-		map.insert(ui.PdeSettingsTableWidget->item(i, 0)->text(), ui.PdeSettingsTableWidget->item(i, 1)->text());
-	m_PdeSettings->reset(map);
-	
-    m_graph_solution = m_PdeSolver->solve(*m_PdeSettings);
-	
-	m_current_time = 0;
-    m_timer->start(m_graph_update_time_step);
+    //reading from ui.PdeSettingsTableWidget
+    QVariantMap map;
+    int rowCount = ui.PdeSettingsTableWidget->rowCount();
+    for (int i = 0; i < rowCount; ++i)
+        map.insert(ui.PdeSettingsTableWidget->item(i, 0)->text(), ui.PdeSettingsTableWidget->item(i, 1)->text());
+
+    m_PdeSolver->solve(PdeSettings(map));
 }

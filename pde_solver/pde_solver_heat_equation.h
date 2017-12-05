@@ -5,11 +5,14 @@
 
 class PdeSolverHeatEquation : public PdeSolverBase
 {
+    Q_OBJECT
+
 public:
     PdeSolverHeatEquation();
     virtual ~PdeSolverHeatEquation();
 
-    virtual GraphSolution_t solve(const PdeSettings& set);
+public slots:
+    virtual void get_solution(const PdeSettings& set);
 
 protected:
     GraphDataSlice_t alternating_direction_method(const PdeSettings& set, const GraphDataSlice_t& prev_graph_data_slice, char stencil);

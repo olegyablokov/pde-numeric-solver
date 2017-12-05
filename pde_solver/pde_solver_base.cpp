@@ -1,21 +1,37 @@
-//#include "pde_settings.h"
 #include "pde_solver_base.h"
+#include <unistd.h>
 
 using namespace QtDataVisualization;
 
+Q_DECLARE_METATYPE(PdeSolverBase::GraphDataSlice_t);
+Q_DECLARE_METATYPE(PdeSolverBase::GraphData_t);
+Q_DECLARE_METATYPE(PdeSolverBase::GraphSolution_t);
+Q_DECLARE_METATYPE(PdeSettings);
 
-PdeSolverBase::PdeSolverBase()
+PdeSolverBase::PdeSolverBase(QObject *parent) : QObject(parent)
 {
+    qRegisterMetaType<GraphDataSlice_t>();
+    qRegisterMetaType<GraphData_t>();
+    qRegisterMetaType<GraphSolution_t>();
+    qRegisterMetaType<PdeSettings>();
+
+    connect(this, SIGNAL(solve_invoked(PdeSettings)), this, SLOT(get_solution(PdeSettings)));
 }
 
 
 PdeSolverBase::~PdeSolverBase()
 {
+    deleteLater();
 }
 
+void PdeSolverBase::solve(const PdeSettings& set)
+{
+    emit solve_invoked(set);
+}
 
 PdeSolverBase::GraphDataSlice_t PdeSolverBase::get_initial_conditions(const PdeSettings& set)
 {
+    qDebug() << "PdeSolverBase::get_initial_conditions invoked";
     auto cur_array = new QSurfaceDataArray();
     auto cur_array_t = new QSurfaceDataArray();  // partial du/dt
 
@@ -28,16 +44,21 @@ PdeSolverBase::GraphDataSlice_t PdeSolverBase::get_initial_conditions(const PdeS
 		y_count = 0;
         for (float y_val = set.minY; y_val < set.maxY; y_val += set.stepY)
 		{
-			//row->push_back(QVector3D(x_val, y_val, pde_settings.V1(QVector2D(x_val, y_val))));
             row->push_back(QVector3D(y_val, set.V1(QVector2D(x_val, y_val)), x_val));
-			++y_count;
-
+            ++y_count;
             row_t->push_back(QVector3D(y_val, set.V2(QVector2D(x_val, y_val)), x_val));
+
+            emit solution_progress_update("Computing initial conditions...", int(float(x_count * 100) / set.countX));
         }
 		cur_array->push_back(row);
         cur_array_t->push_back(row_t);
 		++x_count;
 	}
-
+    qDebug() << "PdeSolverBase::get_initial_conditions returned";
     return std::make_pair(cur_array, cur_array_t);
+}
+
+void PdeSolverBase::get_solution(const PdeSettings& set)
+{
+    throw("Error: calling PdeSolverBase::get_solution method (it is a base class)");
 }

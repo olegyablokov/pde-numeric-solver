@@ -50,9 +50,12 @@ public:
 public slots:
     void update_TimeSlice();
     void EvaluatePushButton_clicked();
-    void EquationComboBoxCurrentIndex_changed(QString);
+    void change_pde_solver(QString);
     void GraphSlider_changed(int);
     //void PdeSettingsTableWidgetCellClickedSlot(int, int);
+
+    void graph_solution_generated(PdeSolverBase::GraphSolution_t);
+    void solution_progress_updated(QString, int);
 
 private:
     void init_graph();
@@ -68,9 +71,11 @@ private:
 	QString m_pde_settings_filename;
 	int m_current_time = 0;
 	//QtDataVisualization::QSurfaceDataProxy m_SurfaceDataProxy;
-    PdeSolverBase* m_PdeSolver;  // std::shared_ptr<PdeSolver>
-    PdeSolverBase::GraphSolution_t m_graph_solution;
+    std::shared_ptr<PdeSolverBase> m_PdeSolver;  // std::shared_ptr<PdeSolver>
+    PdeSolverBase::GraphData_t m_graph_data;
     int m_graph_update_time_step = 40;  // in ms
+
+    QThread m_GraphThread;
 
 	QtDataVisualization::QSurface3DSeries *m_series;
 	QtDataVisualization::Q3DSurface *m_graph;
