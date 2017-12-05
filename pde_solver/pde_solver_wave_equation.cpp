@@ -123,7 +123,7 @@ PdeSolverBase::GraphDataSlice_t PdeSolverWaveEquation::alternating_direction_met
             z_val = d[index2];
             row->push_back(QVector3D(prev_vector.x(), z_val, prev_vector.z()));
 
-            z_val_t = + (z_val - prev_vector.y()) / (set.stepT / 2);
+            z_val_t = + (z_val - prev_vector.y()) / (set.stepT / 1.9); // 2
             row_t->push_back(QVector3D(prev_vector.x(), z_val_t, prev_vector.z()));
         }
         cur_graph_data_slice.first->push_back(row);

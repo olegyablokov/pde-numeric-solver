@@ -18,13 +18,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui.setupUi(this);
 
-//    qRegisterMetaType<PdeSolverBase::GraphDataSlice_t>();
-//    qRegisterMetaType<PdeSolverBase::GraphData_t>();
-//    qRegisterMetaType<PdeSolverBase::GraphSolution_t>();
-//    qRegisterMetaType<PdeSettings>();
-
-    //setStyleSheet("QGroupBox{padding-top:15px; margin-top:-15px}");
-
 	m_pde_settings_filename = "pde_settings.json";
 	m_PdeSettings = init_pde_settings(m_pde_settings_filename);
 
@@ -37,9 +30,9 @@ MainWindow::~MainWindow()
 {
     m_GraphThread.quit();
     m_GraphThread.deleteLater();
-    delete m_GraphSlider;
-    delete m_GraphSliderLabel;
-    delete m_GraphSliderLayout;
+    delete m_GraphTimeSpeedSlider;
+    delete m_GraphTimeSpeedLabel;
+    delete m_GraphTimeSpeedLayout;
 }
 
 void MainWindow::start()
@@ -48,7 +41,7 @@ void MainWindow::start()
     connect(m_timer, SIGNAL(timeout()), this, SLOT(update_TimeSlice()));
 
     m_GraphThread.start();
-    change_pde_solver("Heat equation");
+    change_pde_solver("Wave equation");
 
     m_PdeSolver->solve(*m_PdeSettings);
 
@@ -116,17 +109,36 @@ void MainWindow::init_graph()
     m_graph->seriesList().at(0)->setBaseGradient(gr);
     m_graph->seriesList().at(0)->setColorStyle(Q3DTheme::ColorStyleRangeGradient);
 
-    m_GraphSliderLabel = new QLabel("Update frequency: " + QString::number(m_graph_update_time_step));
-    m_GraphSliderLabel->setMinimumWidth(200);
-    m_GraphSlider = new QSlider(Qt::Horizontal);
-    m_GraphSlider->setMinimum(10);
-    m_GraphSlider->setMaximum(1000);
-    m_GraphSlider->setSingleStep(10);
-    m_GraphSlider->setValue(m_graph_update_time_step);
+    //setting graph time speed layout
+    m_GraphTimeSpeedLabel = new QLabel("Update frequency: " + QString::number(m_graph_update_time_step));
+    m_GraphTimeSpeedSlider = new QSlider(Qt::Horizontal);
+    m_GraphTimeSpeedLayout = new QHBoxLayout();
 
-    m_GraphSliderLayout = new QHBoxLayout();
-    m_GraphSliderLayout->addWidget(m_GraphSliderLabel);
-    m_GraphSliderLayout->addWidget(m_GraphSlider);
+    m_GraphTimeSpeedLabel->setMinimumWidth(200);
+
+    m_GraphTimeSpeedSlider->setMinimum(10);
+    m_GraphTimeSpeedSlider->setMaximum(1000);
+    m_GraphTimeSpeedSlider->setSingleStep(1);
+    m_GraphTimeSpeedSlider->setValue(m_graph_update_time_step);
+
+    m_GraphTimeSpeedLayout->addWidget(m_GraphTimeSpeedLabel);
+    m_GraphTimeSpeedLayout->addWidget(m_GraphTimeSpeedSlider);
+
+    //setting graph current time layout
+    m_GraphCurrentTimeLabel = new QLabel("Current time slice: " + QString::number(m_current_time_slice));
+    m_GraphCurrentTimeSlider = new QSlider(Qt::Horizontal);
+    m_GraphCurrentTimeLayout = new QHBoxLayout();
+
+    m_GraphCurrentTimeLabel->setMinimumWidth(200);
+
+    m_GraphCurrentTimeSlider->setMinimum(0);
+    m_GraphCurrentTimeSlider->setMaximum(m_PdeSettings->countT);
+    m_GraphCurrentTimeSlider->setSingleStep(1);
+    m_GraphCurrentTimeSlider->setValue(0);
+
+    m_GraphCurrentTimeLayout->addWidget(m_GraphCurrentTimeLabel);
+    m_GraphCurrentTimeLayout->addWidget(m_GraphCurrentTimeSlider);
+
 
     m_GraphWidget = QWidget::createWindowContainer(m_graph);
 
@@ -134,20 +146,21 @@ void MainWindow::init_graph()
     //m_GraphOccuracyLabel->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
 
     ui.GraphLayout->addWidget(m_GraphWidget);
-    ui.GraphLayout->addLayout(m_GraphSliderLayout);
+    ui.GraphLayout->addLayout(m_GraphTimeSpeedLayout);
+    ui.GraphLayout->addLayout(m_GraphCurrentTimeLayout);
     //ui.GraphLayout->addWidget(m_GraphOccuracyLabel);
 
-    connect(m_GraphSlider, SIGNAL(actionTriggered(int)), this, SLOT(GraphSlider_changed(int)));
+    connect(m_GraphTimeSpeedSlider, SIGNAL(actionTriggered(int)), this, SLOT(GraphTimeSpeedSlider_changed(int)));
 }
 
-void MainWindow::GraphSlider_changed(int action)
+void MainWindow::GraphTimeSpeedSlider_changed(int action)
 {
     if (action == QAbstractSlider::SliderMove)
     {
-        m_graph_update_time_step = m_GraphSlider->value();
+        m_graph_update_time_step = m_GraphTimeSpeedSlider->value();
         m_timer->stop();
         m_timer->start(m_graph_update_time_step);
-        m_GraphSliderLabel->setText("Update frequency: " + QString::number(m_graph_update_time_step));
+        m_GraphTimeSpeedLabel->setText("Update frequency: " + QString::number(m_graph_update_time_step));
     }
 }
 
@@ -228,11 +241,14 @@ void MainWindow::graph_solution_generated(PdeSolverBase::GraphSolution_t solutio
     *m_PdeSettings = solution.set;
 
     qDebug() << "Update timer started";
-    m_current_time = 0;
+    m_current_time_slice = 0;
     m_timer->start(m_graph_update_time_step);
 
     ui.EvaluatePushButton->setDisabled(false);
     ui.EquationComboBox->setDisabled(false);
+
+    m_GraphCurrentTimeSlider->setMinimum(0);
+    m_GraphCurrentTimeSlider->setMaximum(m_PdeSettings->countT);
 }
 
 void MainWindow::solution_progress_updated(QString msg, int value)
@@ -297,14 +313,17 @@ QSurfaceDataArray* newSurfaceDataArrayFromSource(QSurfaceDataArray& source_surfa
 
 void MainWindow::update_TimeSlice()
 {
-	if (m_current_time >= m_PdeSettings->countT)
-		m_current_time = 0;
-    auto qsurface_data_array = m_graph_data.first.at(m_current_time);
+    ++m_current_time_slice;
+    if (m_current_time_slice >= m_PdeSettings->countT)
+        m_current_time_slice = 0;
+    auto qsurface_data_array = m_graph_data.first.at(m_current_time_slice);
 	auto modifier = [](QSurfaceDataItem item) -> void { item.position(); };
 	
     m_series->dataProxy()->resetArray(newSurfaceDataArrayFromSource(*qsurface_data_array, modifier));
     //m_GraphOccuracyLabel->setText("Occuracy : " + QString::number(m_graph_solution.occuracy[m_current_time]));
-	++m_current_time;
+
+    m_GraphCurrentTimeSlider->setValue(m_current_time_slice);
+    m_GraphCurrentTimeLabel->setText("Current time slice: " + QString::number(m_current_time_slice));
 }
 
 //void clear_data(std::shared_ptr<QVector<QtDataVisualization::QSurfaceDataArray*>> vector)

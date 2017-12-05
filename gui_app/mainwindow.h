@@ -51,7 +51,8 @@ public slots:
     void update_TimeSlice();
     void EvaluatePushButton_clicked();
     void change_pde_solver(QString);
-    void GraphSlider_changed(int);
+
+    void GraphTimeSpeedSlider_changed(int);
     //void PdeSettingsTableWidgetCellClickedSlot(int, int);
 
     void graph_solution_generated(PdeSolverBase::GraphSolution_t);
@@ -69,21 +70,29 @@ private:
 
 	std::shared_ptr<PdeSettings> m_PdeSettings;
 	QString m_pde_settings_filename;
-	int m_current_time = 0;
+
 	//QtDataVisualization::QSurfaceDataProxy m_SurfaceDataProxy;
+    QtDataVisualization::QSurface3DSeries *m_series;
+    QtDataVisualization::Q3DSurface *m_graph;
     std::shared_ptr<PdeSolverBase> m_PdeSolver;  // std::shared_ptr<PdeSolver>
     PdeSolverBase::GraphData_t m_graph_data;
+
+    int m_current_time_slice = 0;
     int m_graph_update_time_step = 40;  // in ms
 
     QThread m_GraphThread;
 
-	QtDataVisualization::QSurface3DSeries *m_series;
-	QtDataVisualization::Q3DSurface *m_graph;
     QTimer* m_timer;
-    QHBoxLayout* m_GraphSliderLayout;
-    QLabel* m_GraphSliderLabel;
+
     QLabel* m_GraphOccuracyLabel;
-    QSlider* m_GraphSlider;
+
+    QHBoxLayout* m_GraphTimeSpeedLayout;
+    QSlider* m_GraphTimeSpeedSlider;
+    QLabel* m_GraphTimeSpeedLabel;
+
+    QHBoxLayout* m_GraphCurrentTimeLayout;
+    QSlider* m_GraphCurrentTimeSlider;
+    QLabel* m_GraphCurrentTimeLabel;
 };
 
 #endif //MAIN_WINDOW_H
