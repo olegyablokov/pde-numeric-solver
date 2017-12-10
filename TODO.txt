@@ -1,11 +1,15 @@
 BUGS:
 	(!IMPORTANT!) wave equation solution is unstable (why?);
-	(!IMPORTANT!) memory leak when recalculating the graph data;
+	(!IMPORTANT!) memory leak when recalculating the graph data;  // partly(?) solved
 	somehow remove the empty place at the top of group boxes (Qt bug, meh);
 	cannot declare a QScriptEngine instance in the PdeSettings class (why?);
-	sometimes application gets SIGABRT error (most likely it is due to incorrect clean up of threads);
+	sometimes application gets the SIGABRT error (most likely it is due to incorrect clean up of threads)
+		*) sometimes it happens when the pde solver is changed (e.g. from PdeSolverWaveEquation to PdeSolverHeatEquation);
 
 FEATURES:
 	add explicit calculation of pde (maybe add some graphs for numerical soulution occuracy?);
 	add some tooltips (especially for QTable items);
 	add "play"/"stop" buttons for the graph;
+	generating initial conditions is very slow, possibly due to QScriptEngine. make it work faster;
+	add the ability to stop a current calculation (the new data must be deleted properly);
+	add a checking that step of any coordinate cannot be changed from GUI to greater or equal than 0;

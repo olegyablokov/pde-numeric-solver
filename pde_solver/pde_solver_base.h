@@ -45,6 +45,7 @@ signals:
 
 protected:
     GraphDataSlice_t get_initial_conditions(const PdeSettings& set);
+    void clear_graph_data_slice(GraphDataSlice_t& data_slice);
 };
 
 #endif //PDE_SOLVER_H

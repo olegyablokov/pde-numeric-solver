@@ -29,18 +29,33 @@ void PdeSolverBase::solve(const PdeSettings& set)
     emit solve_invoked(set);
 }
 
+void PdeSolverBase::clear_graph_data_slice(PdeSolverBase::GraphDataSlice_t& data_slice)
+{
+    for (auto& row_ptr : *data_slice.first) delete row_ptr;
+    delete data_slice.first;
+
+    for (auto& row_ptr : *data_slice.second) delete row_ptr;
+    delete data_slice.second;
+}
+
 PdeSolverBase::GraphDataSlice_t PdeSolverBase::get_initial_conditions(const PdeSettings& set)
 {
     qDebug() << "PdeSolverBase::get_initial_conditions invoked";
     auto cur_array = new QSurfaceDataArray();
     auto cur_array_t = new QSurfaceDataArray();  // partial du/dt
 
+    cur_array->reserve(set.countX);
+    cur_array_t->reserve(set.countX);
+
 	int x_count = 0, y_count = 0;
     for (float x_val = set.minX; x_val < set.maxX; x_val += set.stepX)
 	{
         auto row = new QSurfaceDataRow();
         auto row_t = new QSurfaceDataRow();
+
         row->reserve(set.countY);
+        row_t->reserve(set.countY);
+
 		y_count = 0;
         for (float y_val = set.minY; y_val < set.maxY; y_val += set.stepY)
 		{

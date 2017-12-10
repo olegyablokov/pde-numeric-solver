@@ -17,6 +17,8 @@ void PdeSolverHeatEquation::get_solution(const PdeSettings& set)
 {
     GraphSolution_t solution;
     solution.set = set;
+    solution.graph_data.first.reserve(set.countT);
+    solution.graph_data.second.reserve(set.countT);
 
     GraphDataSlice_t init_slice = get_initial_conditions(set);
     solution.graph_data.first.push_back(init_slice.first);
@@ -40,6 +42,8 @@ void PdeSolverHeatEquation::get_solution(const PdeSettings& set)
 
         solution.graph_data.first.push_back(new_graph_data_slice.first);
         solution.graph_data.second.push_back(new_graph_data_slice.second);
+
+        clear_graph_data_slice(half_new_graph_data_slice);
 
 //        //explicit solution
 //        double val = MathModule::solve_heat_equation_explicitly(QVector2D(1, 1), t_val, set);
@@ -76,17 +80,19 @@ PdeSolverBase::GraphDataSlice_t PdeSolverHeatEquation::alternating_direction_met
     else throw("Wrong stencil");
 
     GraphDataSlice_t cur_graph_data_slice(new QSurfaceDataArray(), new QSurfaceDataArray());
+    cur_graph_data_slice.first->reserve(max_index1);
 
     std::vector<float> a(max_index1, -set.c * set.c / step1 / step1);
     std::vector<float> b(max_index1, 2 / set.stepT + 2 * set.c * set.c / step1 / step1);
     std::vector<float> c(max_index1, -set.c * set.c / step1 / step1);
+    std::vector<float> d;
     float z_val = 0.0f, z_val_t = 0.0f, u1, u2, u3;
     for (int index1 = 0; index1 < max_index1; ++index1)
     {
-        std::vector<float> d;
         QSurfaceDataRow *row = new QSurfaceDataRow();
-        row->reserve(max_index1);
+        row->reserve(max_index2);
 
+        d.clear();
         for (int index2 = 0; index2 < max_index2; ++index2)
         {
             if (stencil == 'x')

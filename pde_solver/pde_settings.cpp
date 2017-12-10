@@ -37,11 +37,15 @@ float PdeSettings::V1(QVector2D x) const
     expression.replace("sqrt", "Math.sqrt");
     expression.replace("sin", "Math.sin");
     expression.replace("cos", "Math.cos");
+    expression.replace("tan", "Math.tan");
+    expression.replace("abs", "Math.abs");
     expression.replace("pow", "Math.pow");
     expression.replace("PI", "Math.PI");
     expression.replace("E", "Math.E");
+    expression.replace("--", "-");
 
     return float(m_ScriptEngine1.evaluate(expression).toNumber() / m);
+    //return float((15 * qPow(2.7, -R * R / 100)) * (qSin(R * 2)));
 }
 
 float PdeSettings::V2(QVector2D x) const

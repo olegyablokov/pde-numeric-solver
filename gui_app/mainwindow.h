@@ -66,7 +66,7 @@ private:
 
 	Ui::MainWindowClass ui;
 
-    void clearData();
+    void clear_graph_data(PdeSolverBase::GraphData_t& graph_data);
 
 	std::shared_ptr<PdeSettings> m_PdeSettings;
 	QString m_pde_settings_filename;

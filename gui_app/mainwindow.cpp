@@ -110,7 +110,7 @@ void MainWindow::init_graph()
     m_graph->seriesList().at(0)->setColorStyle(Q3DTheme::ColorStyleRangeGradient);
 
     //setting graph time speed layout
-    m_GraphTimeSpeedLabel = new QLabel("Update frequency: " + QString::number(m_graph_update_time_step));
+    m_GraphTimeSpeedLabel = new QLabel("Update frequency (ms/frame): " + QString::number(m_graph_update_time_step));
     m_GraphTimeSpeedSlider = new QSlider(Qt::Horizontal);
     m_GraphTimeSpeedLayout = new QHBoxLayout();
 
@@ -160,7 +160,7 @@ void MainWindow::GraphTimeSpeedSlider_changed(int action)
         m_graph_update_time_step = m_GraphTimeSpeedSlider->value();
         m_timer->stop();
         m_timer->start(m_graph_update_time_step);
-        m_GraphTimeSpeedLabel->setText("Update frequency: " + QString::number(m_graph_update_time_step));
+        m_GraphTimeSpeedLabel->setText("Update frequency (ms/frame): " + QString::number(m_graph_update_time_step));
     }
 }
 
@@ -228,6 +228,7 @@ void MainWindow::init_EquationComboBox()
 {
     ui.EquationComboBox->addItem("Wave equation");
     ui.EquationComboBox->addItem("Heat equation");
+
     connect(ui.EquationComboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(change_pde_solver(QString)));
 }
 
@@ -235,7 +236,7 @@ void MainWindow::graph_solution_generated(PdeSolverBase::GraphSolution_t solutio
 {
     qDebug() << "MainWindow::graph_solution_generated invoked";
     m_timer->stop();
-    //clearData();
+    clear_graph_data(m_graph_data);
 
     m_graph_data = solution.graph_data;
     *m_PdeSettings = solution.set;
@@ -273,21 +274,27 @@ void MainWindow::change_pde_solver(QString value)
     connect(m_PdeSolver.get(), SIGNAL(solution_generated(PdeSolverBase::GraphSolution_t)), this, SLOT(graph_solution_generated(PdeSolverBase::GraphSolution_t)), Qt::QueuedConnection);
 }
 
-void clearSurfaceDataArray(QSurfaceDataArray& array)
+void MainWindow::clear_graph_data(PdeSolverBase::GraphData_t& graph_data)
 {
-    for (int j(0); j < array.size(); j++) delete array[j];
-    array.clear();
-}
-
-void MainWindow::clearData()
-{
-    for (int i(0); i < m_graph_data.first.size(); i++)
+    for (auto& array_ptr : graph_data.first)
     {
-        QSurfaceDataArray* array = m_graph_data.first.at(i);
-        clearSurfaceDataArray(*array);
-        delete array;
+        for (auto& row_ptr : *array_ptr)
+        {
+            delete row_ptr;
+        }
+        delete array_ptr;
     }
-    m_graph_data.first.erase(m_graph_data.first.begin(), m_graph_data.first.end());
+    graph_data.first.clear();
+
+    for (auto& array_ptr : graph_data.second)
+    {
+        for (auto& row_ptr : *array_ptr)
+        {
+            delete row_ptr;
+        }
+        delete array_ptr;
+    }
+    graph_data.second.clear();
 }
 
 QSurfaceDataArray* newSurfaceDataArrayFromSource(QSurfaceDataArray& source_surface_data_array,
