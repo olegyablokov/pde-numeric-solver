@@ -8,32 +8,27 @@ PdeSettings::PdeSettings()
     stepX = (maxX - minX) / float(countX);
     stepY = (maxY - minY) / float(countY);
     stepT = (maxT - minT) / float(countT);
-
-    //m_ScriptEngine = new QScriptEngine();
 }
 
 PdeSettings::PdeSettings(QVariantMap& map)
 {
     reset(map);
-    //m_ScriptEngine = new QScriptEngine();
 }
 
 PdeSettings::~PdeSettings()
 {
-    //delete m_ScriptEngine;
 }
 
-float PdeSettings::V1(QVector2D x) const
+float PdeSettings::evaluate_expression(QString expression, QVector2D x) const
 {
     float R = qSqrt(x[0] * x[0] + x[1] * x[1]);
 
     //TODO: why problems with declaring QScriptEngine instance in class?
     QScriptEngine m_ScriptEngine1;
 
-    QString expression = V1_str;
-    expression.replace("x", QString::number(x[0]));
-    expression.replace("y", QString::number(x[1]));
-    expression.replace("R", QString::number(R));
+    expression.replace("x", QString::number(x[0] / m));
+    expression.replace("y", QString::number(x[1] / m));
+    expression.replace("R", QString::number(R / (m * m)));
     expression.replace("sqrt", "Math.sqrt");
     expression.replace("sin", "Math.sin");
     expression.replace("cos", "Math.cos");
@@ -44,28 +39,17 @@ float PdeSettings::V1(QVector2D x) const
     expression.replace("E", "Math.E");
     expression.replace("--", "-");
 
-    return float(m_ScriptEngine1.evaluate(expression).toNumber() / m);
-    //return float((15 * qPow(2.7, -R * R / 100)) * (qSin(R * 2)));
+    return float(m_ScriptEngine1.evaluate(expression).toNumber());
+}
+
+float PdeSettings::V1(QVector2D x) const
+{
+    return evaluate_expression(V1_str, x);
 }
 
 float PdeSettings::V2(QVector2D x) const
 {
-    float R = qSqrt(x[0] * x[0] + x[1] * x[1]);
-
-    QScriptEngine m_ScriptEngine1;
-
-    QString expression = V2_str;
-    expression.replace("x", QString::number(x[0]));
-    expression.replace("y", QString::number(x[1]));
-    expression.replace("R", QString::number(R));
-    expression.replace("sqrt", "Math.sqrt");
-    expression.replace("sin", "Math.sin");
-    expression.replace("cos", "Math.cos");
-    expression.replace("pow", "Math.pow");
-    expression.replace("PI", "Math.PI");
-    expression.replace("E", "Math.E");
-
-    return float(m_ScriptEngine1.evaluate(expression).toNumber() / m);
+    return evaluate_expression(V2_str, x);
 }
 
 void PdeSettings::reset(QVariantMap& map)
@@ -73,8 +57,8 @@ void PdeSettings::reset(QVariantMap& map)
     if (map.contains("V1")) V1_str = map["V1"].value<QString>();
     if (map.contains("V2")) V2_str = map["V2"].value<QString>();
 
-    if (map.contains("c")) countX = map["c"].value<float>();
-    if (map.contains("m")) countX = map["m"].value<float>();
+    if (map.contains("c")) c = map["c"].value<float>();
+    if (map.contains("m")) m = map["m"].value<float>();
 
     if (map.contains("countX(Y)"))
     {
@@ -106,7 +90,6 @@ QVariantMap PdeSettings::toQVariantMap()
     map.insert("m", m);
 
     map.insert("countX(Y)", countX);
-    //map.insert("countY", countY);
     map.insert("countT", countT);
 
     map.insert("minX", minX);

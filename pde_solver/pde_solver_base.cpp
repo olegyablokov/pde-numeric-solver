@@ -21,7 +21,7 @@ PdeSolverBase::PdeSolverBase(QObject *parent) : QObject(parent)
 
 PdeSolverBase::~PdeSolverBase()
 {
-    deleteLater();
+
 }
 
 void PdeSolverBase::solve(const PdeSettings& set)

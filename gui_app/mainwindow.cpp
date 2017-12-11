@@ -29,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     m_GraphThread.quit();
-    m_GraphThread.deleteLater();
+    m_GraphThread.wait();
     delete m_GraphTimeSpeedSlider;
     delete m_GraphTimeSpeedLabel;
     delete m_GraphTimeSpeedLayout;
@@ -268,6 +268,8 @@ void MainWindow::change_pde_solver(QString value)
     {
         m_PdeSolver.reset(new PdeSolverWaveEquation());
     }
+    else throw("Wrong value. Must be \"Heat equation\" or \"Wave equation\"");
+
     m_PdeSolver->moveToThread(&m_GraphThread);
 
     connect(m_PdeSolver.get(), SIGNAL(solution_progress_update(QString, int)), this, SLOT(solution_progress_updated(QString, int)), Qt::QueuedConnection);

@@ -13,3 +13,4 @@ FEATURES:
 	generating initial conditions is very slow, possibly due to QScriptEngine. make it work faster;
 	add the ability to stop a current calculation (the new data must be deleted properly);
 	add a checking that step of any coordinate cannot be changed from GUI to greater or equal than 0;
+	add	different solving methods (like implicit/explicit methods, Crank-Nicolson method etc.);

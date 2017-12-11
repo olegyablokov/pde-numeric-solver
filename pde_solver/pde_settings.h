@@ -44,11 +44,11 @@ public:
 
     QVariantMap toQVariantMap();
 
-    QScriptEngine* m_ScriptEngine;
-
 private:
     QString V1_str = "(15 * pow(E, -R * R / 100)) * (sin(R * 2))";
     QString V2_str = "R";
+
+    float evaluate_expression(QString expression, QVector2D x) const;
 };
 
 #endif //PDE_SETTINGS_H
