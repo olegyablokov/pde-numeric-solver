@@ -86,6 +86,9 @@ PdeSolverBase::GraphDataSlice_t PdeSolverHeatEquation::alternating_direction_met
     std::vector<float> b(max_index1, 2 / set.stepT + 2 * set.c * set.c / step1 / step1);
     std::vector<float> c(max_index1, -set.c * set.c / step1 / step1);
     std::vector<float> d;
+
+    int prev_ind1 = 0, next_ind1 = 0, prev_ind2 = 0, next_ind2 = 0;
+
     float z_val = 0.0f, z_val_t = 0.0f, u1, u2, u3;
     for (int index1 = 0; index1 < max_index1; ++index1)
     {
@@ -95,17 +98,33 @@ PdeSolverBase::GraphDataSlice_t PdeSolverHeatEquation::alternating_direction_met
         d.clear();
         for (int index2 = 0; index2 < max_index2; ++index2)
         {
-            if (stencil == 'x')
+            if (index1 == 0) prev_ind1 = index1;
+            else prev_ind1 = index1 - 1;
+            if (index2 == 0) prev_ind2 = index2;
+            else prev_ind2 = index2 - 1;
+
+            if (index1 >= max_index1 - 1) next_ind1 = index1;
+            else next_ind1 = index1 + 1;
+            if (index2 >= max_index2 - 1) next_ind2 = index2;
+            else next_ind2 = index2 + 1;
+
+            if ((index1 == 0) || (index2 == 0) || (index1 == max_index1 - 1) || (index2 == max_index2 - 1))
             {
-                u1 = index2 > 0 ? set.c * set.c / step2 / step2 * prev_graph_data_slice.first->at(index1)->at(index2 - 1).y() : 0;
+                u1 = 0;
                 u2 = (2 / set.stepT - 2 * set.c * set.c / step2 / step2) * prev_graph_data_slice.first->at(index1)->at(index2).y();
-                u3 = index2 < max_index2 - 1 ? set.c * set.c / step2 / step2 * prev_graph_data_slice.first->at(index1)->at(index2 + 1).y() : 0;
+                u3 = 0;
+            }
+            else if (stencil == 'x')
+            {
+                u1 = set.c * set.c / step2 / step2 * prev_graph_data_slice.first->at(index1)->at(prev_ind2).y();
+                u2 = (2 / set.stepT - 2 * set.c * set.c / step2 / step2) * prev_graph_data_slice.first->at(index1)->at(index2).y();
+                u3 = set.c * set.c / step2 / step2 * prev_graph_data_slice.first->at(index1)->at(next_ind2).y();
             }
             else if (stencil == 'y')
             {
-                u1 = index1 > 0 ? set.c * set.c / step2 / step2 * prev_graph_data_slice.first->at(index1 - 1)->at(index2).y() : 0;
+                u1 = set.c * set.c / step2 / step2 * prev_graph_data_slice.first->at(prev_ind1)->at(index2).y();
                 u2 = (2 / set.stepT - 2 * set.c * set.c / step2 / step2) * prev_graph_data_slice.first->at(index1)->at(index2).y();
-                u3 = index1 < max_index1 - 1 ? set.c * set.c / step2 / step2 * prev_graph_data_slice.first->at(index1 + 1)->at(index2).y() : 0;
+                u3 = set.c * set.c / step2 / step2 * prev_graph_data_slice.first->at(next_ind1)->at(index2).y();
             }
 
             d.push_back(u1 + u2 + u3);
