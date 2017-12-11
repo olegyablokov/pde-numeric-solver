@@ -129,16 +129,21 @@ void MainWindow::init_graph()
     m_GraphCurrentTimeSlider = new QSlider(Qt::Horizontal);
     m_GraphCurrentTimeLayout = new QHBoxLayout();
 
-    m_GraphCurrentTimeLabel->setMinimumWidth(200);
+    m_GraphCurrentTimeLabel->setMinimumWidth(160);
 
     m_GraphCurrentTimeSlider->setMinimum(0);
     m_GraphCurrentTimeSlider->setMaximum(m_PdeSettings->countT);
     m_GraphCurrentTimeSlider->setSingleStep(1);
     m_GraphCurrentTimeSlider->setValue(0);
 
-    m_GraphCurrentTimeLayout->addWidget(m_GraphCurrentTimeLabel);
-    m_GraphCurrentTimeLayout->addWidget(m_GraphCurrentTimeSlider);
+    m_PlayStopPushButton = new QPushButton();
+    m_PlayStopPushButton->setMinimumWidth(34);
+    m_PlayStopPushButton->setIcon(QIcon(":/mainwindow/icons/stop"));
+    connect(m_PlayStopPushButton, SIGNAL(clicked()), this, SLOT(PlayStopPushButton_clicked()));
 
+    m_GraphCurrentTimeLayout->addWidget(m_GraphCurrentTimeLabel);
+    m_GraphCurrentTimeLayout->addWidget(m_PlayStopPushButton);
+    m_GraphCurrentTimeLayout->addWidget(m_GraphCurrentTimeSlider);
 
     m_GraphWidget = QWidget::createWindowContainer(m_graph);
 
@@ -153,13 +158,34 @@ void MainWindow::init_graph()
     connect(m_GraphTimeSpeedSlider, SIGNAL(actionTriggered(int)), this, SLOT(GraphTimeSpeedSlider_changed(int)));
 }
 
+void MainWindow::toggle_graph_playing(bool play)
+{
+    if (play)
+    {
+        m_PlayStopPushButton->setIcon(QIcon(":/mainwindow/icons/stop"));
+        m_timer->start(m_graph_update_time_step);
+    }
+    else
+    {
+        m_PlayStopPushButton->setIcon(QIcon(":/mainwindow/icons/play"));
+        m_timer->stop();
+    }
+}
+
+void MainWindow::PlayStopPushButton_clicked()
+{
+    toggle_graph_playing(!m_timer->isActive());
+}
+
 void MainWindow::GraphTimeSpeedSlider_changed(int action)
 {
     if (action == QAbstractSlider::SliderMove)
     {
         m_graph_update_time_step = m_GraphTimeSpeedSlider->value();
-        m_timer->stop();
+        toggle_graph_playing(m_timer->isActive());
+
         m_timer->start(m_graph_update_time_step);
+
         m_GraphTimeSpeedLabel->setText("Update frequency (ms/frame): " + QString::number(m_graph_update_time_step));
     }
 }
@@ -235,7 +261,9 @@ void MainWindow::init_EquationComboBox()
 void MainWindow::graph_solution_generated(PdeSolverBase::GraphSolution_t solution)
 {
     qDebug() << "MainWindow::graph_solution_generated invoked";
-    m_timer->stop();
+
+    toggle_graph_playing(false);
+
     clear_graph_data(m_graph_data);
 
     m_graph_data = solution.graph_data;
@@ -243,7 +271,8 @@ void MainWindow::graph_solution_generated(PdeSolverBase::GraphSolution_t solutio
 
     qDebug() << "Update timer started";
     m_current_time_slice = 0;
-    m_timer->start(m_graph_update_time_step);
+
+    toggle_graph_playing(true);
 
     ui.EvaluatePushButton->setDisabled(false);
     ui.EquationComboBox->setDisabled(false);

@@ -50,6 +50,8 @@ public:
 public slots:
     void update_TimeSlice();
     void EvaluatePushButton_clicked();
+    void PlayStopPushButton_clicked();
+    void toggle_graph_playing(bool play);
     void change_pde_solver(QString);
 
     void GraphTimeSpeedSlider_changed(int);
@@ -93,6 +95,8 @@ private:
     QHBoxLayout* m_GraphCurrentTimeLayout;
     QSlider* m_GraphCurrentTimeSlider;
     QLabel* m_GraphCurrentTimeLabel;
+
+    QPushButton* m_PlayStopPushButton;
 };
 
 #endif //MAIN_WINDOW_H

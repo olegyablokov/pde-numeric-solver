@@ -31,7 +31,6 @@ FORMS += mainwindow.ui
 
 #_______________________________________
 #DESTDIR = ../x64/Debug
-#RESOURCES += mainwindow.qrc
 #CONFIG += debug
 #INCLUDEPATH += ./GeneratedFiles \
 #    . \
@@ -54,3 +53,6 @@ DEPENDPATH += $$PWD/../../../../../opt/cubature
 
 DISTFILES += \
     ../TODO.txt
+
+RESOURCES += \
+    mainwindow.qrc
