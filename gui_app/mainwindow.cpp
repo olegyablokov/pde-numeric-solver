@@ -315,7 +315,6 @@ std::shared_ptr<PdeSettings> MainWindow::init_pde_settings(QString pde_settings_
 
 void MainWindow::init_EquationComboBox()
 {
-    ui.EquationComboBox->addItem("Wave equation (crank)");
     ui.EquationComboBox->addItem("Wave equation");
     ui.EquationComboBox->addItem("Heat equation");
 
@@ -366,10 +365,6 @@ void MainWindow::change_pde_solver(QString value)
     else if (value == "Wave equation")
     {
         m_PdeSolver.reset(new PdeSolverWaveEquation());
-    }
-    else if (value == "Wave equation (crank)")
-    {
-        m_PdeSolver.reset(new PdeSolverWaveEquationCrankNicolson());
     }
     else throw("Wrong value. Must be \"Heat equation\" or \"Wave equation\"");
 

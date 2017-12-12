@@ -34,7 +34,6 @@
 #include "../pde_solver/pde_solver_base.h"
 #include "../pde_solver/pde_solver_heat_equation.h"
 #include "../pde_solver/pde_solver_wave_equation.h"
-#include "../pde_solver/pde_solver_wave_equation_crank_nicolson.h"
 
 class MainWindow : public QMainWindow
 {
