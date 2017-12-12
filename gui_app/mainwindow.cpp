@@ -40,8 +40,23 @@ void MainWindow::start()
     connect(ui.EvaluatePushButton, SIGNAL(clicked()), this, SLOT(EvaluatePushButton_clicked()));
     connect(m_timer, SIGNAL(timeout()), this, SLOT(update_TimeSlice()));
 
+    ui.EvaluatePushButton->setDisabled(true);
+    ui.EquationComboBox->setDisabled(true);
+
     m_GraphThread.start();
     change_pde_solver("Wave equation");
+
+    //set the current value of EquationComboBox
+    int i;
+    for (i = 0; i < ui.EquationComboBox->count(); ++i)
+    {
+        if (ui.EquationComboBox->itemText(i) == "Wave equation")
+        {
+            ui.EquationComboBox->setCurrentIndex(i);
+            break;
+        }
+    }
+    if (i == ui.EquationComboBox->count()) throw("Error: \"Wave equation\" not found in ui.EquationComboBox");
 
     m_PdeSolver->solve(*m_PdeSettings);
 
@@ -129,20 +144,42 @@ void MainWindow::init_graph()
     m_GraphCurrentTimeSlider = new QSlider(Qt::Horizontal);
     m_GraphCurrentTimeLayout = new QHBoxLayout();
 
-    m_GraphCurrentTimeLabel->setMinimumWidth(160);
+    m_GraphCurrentTimeLabel->setMinimumWidth(200);
 
     m_GraphCurrentTimeSlider->setMinimum(0);
     m_GraphCurrentTimeSlider->setMaximum(m_PdeSettings->countT);
     m_GraphCurrentTimeSlider->setSingleStep(1);
     m_GraphCurrentTimeSlider->setValue(0);
 
+    //play/stop/etc. buttons:
     m_PlayStopPushButton = new QPushButton();
-    m_PlayStopPushButton->setMinimumWidth(34);
     m_PlayStopPushButton->setIcon(QIcon(":/mainwindow/icons/stop"));
     connect(m_PlayStopPushButton, SIGNAL(clicked()), this, SLOT(PlayStopPushButton_clicked()));
 
+    m_NextSlidePushButton = new QPushButton();
+    m_NextSlidePushButton->setIcon(QIcon(":/mainwindow/icons/next_slide"));
+
+    connect(m_NextSlidePushButton, SIGNAL(clicked()), this, SLOT(NextSlidePushButton_clicked()));
+
+    m_PrevSlidePushButton = new QPushButton();
+    m_PrevSlidePushButton->setIcon(QIcon(":/mainwindow/icons/prev_slide"));
+    connect(m_PrevSlidePushButton, SIGNAL(clicked()), this, SLOT(PrevSlidePushButton_clicked()));
+
+    m_FirstSlidePushButton = new QPushButton();
+    m_FirstSlidePushButton->setIcon(QIcon(":/mainwindow/icons/first_slide"));
+    connect(m_FirstSlidePushButton, SIGNAL(clicked()), this, SLOT(FirstSlidePushButton_clicked()));
+
+    m_LastSlidePushButton = new QPushButton();
+    m_LastSlidePushButton->setIcon(QIcon(":/mainwindow/icons/last_slide"));
+    connect(m_LastSlidePushButton, SIGNAL(clicked()), this, SLOT(LastSlidePushButton_clicked()));
+    //
+
     m_GraphCurrentTimeLayout->addWidget(m_GraphCurrentTimeLabel);
+    m_GraphCurrentTimeLayout->addWidget(m_FirstSlidePushButton);
+    m_GraphCurrentTimeLayout->addWidget(m_PrevSlidePushButton);
     m_GraphCurrentTimeLayout->addWidget(m_PlayStopPushButton);
+    m_GraphCurrentTimeLayout->addWidget(m_NextSlidePushButton);
+    m_GraphCurrentTimeLayout->addWidget(m_LastSlidePushButton);
     m_GraphCurrentTimeLayout->addWidget(m_GraphCurrentTimeSlider);
 
     m_GraphWidget = QWidget::createWindowContainer(m_graph);
@@ -160,6 +197,7 @@ void MainWindow::init_graph()
 
 void MainWindow::toggle_graph_playing(bool play)
 {
+    if (!m_graph_is_valid) return;
     if (play)
     {
         m_PlayStopPushButton->setIcon(QIcon(":/mainwindow/icons/stop"));
@@ -174,17 +212,42 @@ void MainWindow::toggle_graph_playing(bool play)
 
 void MainWindow::PlayStopPushButton_clicked()
 {
+    if (!m_graph_is_valid) return;
     toggle_graph_playing(!m_timer->isActive());
+}
+
+void MainWindow::NextSlidePushButton_clicked()
+{
+    if (!m_graph_is_valid) return;
+    set_TimeSlice((m_current_time_slice < m_PdeSettings->countT - 1) ? m_current_time_slice + 1 : m_current_time_slice);
+}
+
+void MainWindow::PrevSlidePushButton_clicked()
+{
+    if (!m_graph_is_valid) return;
+    set_TimeSlice((m_current_time_slice > 0) ? m_current_time_slice - 1 : 0);
+}
+
+void MainWindow::FirstSlidePushButton_clicked()
+{
+    if (!m_graph_is_valid) return;
+    set_TimeSlice(0);
+}
+
+void MainWindow::LastSlidePushButton_clicked()
+{
+    if (!m_graph_is_valid) return;
+    set_TimeSlice(m_PdeSettings->countT - 1);
 }
 
 void MainWindow::GraphTimeSpeedSlider_changed(int action)
 {
     if (action == QAbstractSlider::SliderMove)
     {
+        bool was_playing = m_timer->isActive();
+        if (was_playing) toggle_graph_playing(false);
         m_graph_update_time_step = m_GraphTimeSpeedSlider->value();
-        toggle_graph_playing(m_timer->isActive());
-
-        m_timer->start(m_graph_update_time_step);
+        if (was_playing) toggle_graph_playing(true);
 
         m_GraphTimeSpeedLabel->setText("Update frequency (ms/frame): " + QString::number(m_graph_update_time_step));
     }
@@ -252,6 +315,7 @@ std::shared_ptr<PdeSettings> MainWindow::init_pde_settings(QString pde_settings_
 
 void MainWindow::init_EquationComboBox()
 {
+    ui.EquationComboBox->addItem("Wave equation (crank)");
     ui.EquationComboBox->addItem("Wave equation");
     ui.EquationComboBox->addItem("Heat equation");
 
@@ -276,6 +340,11 @@ void MainWindow::graph_solution_generated(PdeSolverBase::GraphSolution_t solutio
 
     ui.EvaluatePushButton->setDisabled(false);
     ui.EquationComboBox->setDisabled(false);
+    if (!m_graph_is_valid)
+    {
+        m_graph_is_valid = true;
+        toggle_graph_playing(true);
+    }
 
     m_GraphCurrentTimeSlider->setMinimum(0);
     m_GraphCurrentTimeSlider->setMaximum(m_PdeSettings->countT);
@@ -292,10 +361,15 @@ void MainWindow::change_pde_solver(QString value)
     if (value == "Heat equation")
     {
         m_PdeSolver.reset(new PdeSolverHeatEquation());
+
     }
     else if (value == "Wave equation")
     {
         m_PdeSolver.reset(new PdeSolverWaveEquation());
+    }
+    else if (value == "Wave equation (crank)")
+    {
+        m_PdeSolver.reset(new PdeSolverWaveEquationCrankNicolson());
     }
     else throw("Wrong value. Must be \"Heat equation\" or \"Wave equation\"");
 
@@ -349,14 +423,13 @@ QSurfaceDataArray* newSurfaceDataArrayFromSource(QSurfaceDataArray& source_surfa
 	return newArray;
 }
 
-void MainWindow::update_TimeSlice()
+void MainWindow::set_TimeSlice(int new_time_slice)
 {
-    ++m_current_time_slice;
-    if (m_current_time_slice >= m_PdeSettings->countT)
-        m_current_time_slice = 0;
+    m_current_time_slice = new_time_slice;
+
     auto qsurface_data_array = m_graph_data.first.at(m_current_time_slice);
-	auto modifier = [](QSurfaceDataItem item) -> void { item.position(); };
-	
+    auto modifier = [](QSurfaceDataItem item) -> void { item.position(); };
+
     m_series->dataProxy()->resetArray(newSurfaceDataArrayFromSource(*qsurface_data_array, modifier));
     //m_GraphOccuracyLabel->setText("Occuracy : " + QString::number(m_graph_solution.occuracy[m_current_time]));
 
@@ -364,25 +437,10 @@ void MainWindow::update_TimeSlice()
     m_GraphCurrentTimeLabel->setText("Current time slice: " + QString::number(m_current_time_slice));
 }
 
-//void clear_data(std::shared_ptr<QVector<QtDataVisualization::QSurfaceDataArray*>> vector)
-//{
-//	//TODO: implent delete_data
-//    if (!vector) return;
-
-//    for (auto data_array : *vector)
-//    {
-//        if (!data_array) continue;
-//        for (auto row : *data_array)
-//        {
-//            if (!row) continue;
-//            row->clear();
-////            for (auto& item : *row)
-////            {
-////                item.reset();
-////            }
-//        }
-//    }
-//}
+void MainWindow::update_TimeSlice()
+{
+    set_TimeSlice((m_current_time_slice < m_PdeSettings->countT - 1) ? m_current_time_slice + 1 : 0);
+}
 
 void MainWindow::EvaluatePushButton_clicked()
 {

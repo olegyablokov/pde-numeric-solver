@@ -1,6 +1,10 @@
 <RCC>
     <qresource prefix="/mainwindow">
         <file alias="icons/stop">icons/stop.png</file>
-        <file alias="icons/play">icons/play.svg</file>
+        <file alias="icons/play">icons/01d79a02c708f898243615da6d76c861-go.svg</file>
+        <file alias="icons/last_slide">icons/4b5d16edaad4177d03552227b69cd114.svg</file>
+        <file alias="icons/first_slide">icons/2905dc5a523cee327951cee5bd7d237f.svg</file>
+        <file alias="icons/prev_slide">icons/b70e5ff368f5ac7849e098b7e0ebb4b8.svg</file>
+        <file alias="icons/next_slide">icons/beaa7384dc2f4d878924063c224c59d8.svg</file>
     </qresource>
 </RCC>

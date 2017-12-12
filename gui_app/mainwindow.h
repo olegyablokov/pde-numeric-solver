@@ -34,6 +34,7 @@
 #include "../pde_solver/pde_solver_base.h"
 #include "../pde_solver/pde_solver_heat_equation.h"
 #include "../pde_solver/pde_solver_wave_equation.h"
+#include "../pde_solver/pde_solver_wave_equation_crank_nicolson.h"
 
 class MainWindow : public QMainWindow
 {
@@ -50,7 +51,13 @@ public:
 public slots:
     void update_TimeSlice();
     void EvaluatePushButton_clicked();
+
     void PlayStopPushButton_clicked();
+    void NextSlidePushButton_clicked();
+    void PrevSlidePushButton_clicked();
+    void FirstSlidePushButton_clicked();
+    void LastSlidePushButton_clicked();
+
     void toggle_graph_playing(bool play);
     void change_pde_solver(QString);
 
@@ -66,6 +73,8 @@ private:
 	std::shared_ptr<PdeSettings> init_pde_settings(QString pde_settings_filename);
     void init_EquationComboBox();
 
+    void set_TimeSlice(int new_time_slice);
+
 	Ui::MainWindowClass ui;
 
     void clear_graph_data(PdeSolverBase::GraphData_t& graph_data);
@@ -78,6 +87,8 @@ private:
     QtDataVisualization::Q3DSurface *m_graph;
     std::shared_ptr<PdeSolverBase> m_PdeSolver;  // std::shared_ptr<PdeSolver>
     PdeSolverBase::GraphData_t m_graph_data;
+
+    bool m_graph_is_valid = false;
 
     int m_current_time_slice = 0;
     int m_graph_update_time_step = 40;  // in ms
@@ -97,6 +108,10 @@ private:
     QLabel* m_GraphCurrentTimeLabel;
 
     QPushButton* m_PlayStopPushButton;
+    QPushButton* m_NextSlidePushButton;
+    QPushButton* m_PrevSlidePushButton;
+    QPushButton* m_LastSlidePushButton;
+    QPushButton* m_FirstSlidePushButton;
 };
 
 #endif //MAIN_WINDOW_H
