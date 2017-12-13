@@ -11,16 +11,25 @@
 #include <functional>
 #include <sys/types.h>
 
+/**
+ * @brief A class for storing settings for solving a pde equation (such as the initial function, the time step, the coefficients etc.).
+ *
+ */
 class PdeSettings
 {
 public:    
     PdeSettings();
+
+    /**
+     * @brief A constructor for creating an object from a QVariantMap.
+     * @see reset(QVariantMap& map)
+     */
     PdeSettings(QVariantMap& map);
 
     ~PdeSettings();
 
-    float V1(QVector2D x) const;
-    float V2(QVector2D x) const;
+    float V1(QVector2D x) const;  /**< The initial function u(x, 0) */
+    float V2(QVector2D x) const;  /**< The initial function du/dt(x, 0) */
 
 	float c = 2.0f; 
     float m = 1.0f;
@@ -40,6 +49,11 @@ public:
 	float stepY;
 	float stepT;
 
+    /**
+     * @brief A method for changing the object data from a QVariantMap.
+     *
+     * If an entry is missing, no change for the entry will be applied.
+     */
     void reset(QVariantMap& map);
 
     QVariantMap toQVariantMap();

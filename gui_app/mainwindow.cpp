@@ -30,9 +30,25 @@ MainWindow::~MainWindow()
 {
     m_GraphThread.quit();
     m_GraphThread.wait();
+
     delete m_GraphTimeSpeedSlider;
     delete m_GraphTimeSpeedLabel;
     delete m_GraphTimeSpeedLayout;
+
+    delete m_GraphCurrentTimeLabel;
+    delete m_GraphCurrentTimeSlider;
+    delete m_GraphCurrentTimeLayout;
+
+    delete m_PlayStopPushButton;
+    delete m_NextSlidePushButton;
+    delete m_PrevSlidePushButton;
+    delete m_FirstSlidePushButton;
+    delete m_LastSlidePushButton;
+
+    delete m_timer;
+    delete m_series;
+
+    delete m_graph;
 }
 
 void MainWindow::start()
@@ -97,9 +113,9 @@ void MainWindow::init_graph()
     m_graph->setAxisY(new QValue3DAxis);
     m_graph->setAxisZ(new QValue3DAxis);
 
-    m_graph->axisX()->setRange(m_PdeSettings->minX, m_PdeSettings->maxX);
-    m_graph->axisY()->setRange(m_PdeSettings->minY, m_PdeSettings->maxY);
-    //new_graph->axisZ()->setRange(0.0f, 1.0f);
+    m_graph->axisZ()->setRange(m_PdeSettings->minX, m_PdeSettings->maxX);
+    m_graph->axisX()->setRange(m_PdeSettings->minY, m_PdeSettings->maxY);
+    m_graph->axisY()->setRange(-20.0f, 20.0f);
 
     m_graph->axisX()->setLabelFormat("%.2f");
     m_graph->axisY()->setLabelFormat("%.2f");
@@ -111,7 +127,6 @@ void MainWindow::init_graph()
     m_graph->axisY()->setTitleVisible(true);
     m_graph->axisZ()->setTitle("X");
     m_graph->axisZ()->setTitleVisible(true);
-	//m_graph->axisZ()->setReversed(true);
 
     m_graph->addSeries(m_series);
 
@@ -331,6 +346,9 @@ void MainWindow::graph_solution_generated(PdeSolverBase::GraphSolution_t solutio
 
     m_graph_data = solution.graph_data;
     *m_PdeSettings = solution.set;
+
+    m_graph->axisZ()->setRange(m_PdeSettings->minX, m_PdeSettings->maxX);
+    m_graph->axisX()->setRange(m_PdeSettings->minY, m_PdeSettings->maxY);
 
     qDebug() << "Update timer started";
     m_current_time_slice = 0;

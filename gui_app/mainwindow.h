@@ -35,6 +35,9 @@
 #include "../pde_solver/pde_solver_heat_equation.h"
 #include "../pde_solver/pde_solver_wave_equation.h"
 
+/**
+ * @brief The main controlling GUI class.
+ */
 class MainWindow : public QMainWindow
 {
 	Q_OBJECT
