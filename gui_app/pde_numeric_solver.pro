@@ -44,13 +44,6 @@ FORMS += mainwindow.ui
 #SUBDIRS += \
 #    pde_numeric_solver.pro
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../../../../opt/cubature/build/release/ -lcubature
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../../../../opt/cubature/build/debug/ -lcubature
-else:unix: LIBS += -L$$PWD/../../../../../opt/cubature/build/ -lcubature
-
-INCLUDEPATH += $$PWD/../../../../../opt/cubature
-DEPENDPATH += $$PWD/../../../../../opt/cubature
-
 DISTFILES += \
     ../TODO.txt
 
