@@ -42,7 +42,7 @@ public:
     float minY = -10.0f;    /**< The minimum Y value of the grid */
     float maxY = 10.0f;     /**< The maximum Y value of the grid */
     float minT = 0.0f;      /**< The minimum T value of the grid */
-    float maxT = 0.05f;     /**< The maximum T value of the grid */
+    float maxT = 0.08f;     /**< The maximum T value of the grid */
 
     float stepX;  /**< The step along the X axis */
     float stepY;  /**< The step along the Y axis */
@@ -84,7 +84,7 @@ public:
     QVariantMap getQVariantMapToolTips() const;
 
 private:
-    QString V1_str = "(15 * pow(E, -R * R / 100)) * (sin(R * 2))";
+    QString V1_str = "30*pow(E, -(abs(x)+abs(y))/5)*sin((abs(x)+abs(y)))";
     QString V2_str = "R";
 
     float evaluate_expression(QString expression, QVector2D x) const;

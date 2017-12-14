@@ -19,7 +19,7 @@
  * @brief The base class for pde solvers.
  *
  * PdeSolverBase is the base class for pde solvers that are used for generating numerical solutions of pde equations.\n
- * For inheiting please implement the get_solution(const PdeSettings& set) method. The output data must be emited in a form of a Qt signal solution_generated(PdeSolverBase::GraphSolution_t).
+ * For inheriting please implement the get_solution(const PdeSettings& set) method. The output data must be emited in a form of a Qt signal solution_generated(PdeSolverBase::GraphSolution_t).
  */
 class PdeSolverBase : public QObject
 {

@@ -293,8 +293,9 @@ void MainWindow::init_PdeSettingsTableWidget(const PdeSettings& set)
 		++n_row;
 	}
 
-    //ui.PdeSettingsTableWidget->resizeRowsToContents();
+    ui.PdeSettingsTableWidget->resizeRowsToContents();
     ui.PdeSettingsTableWidget->resizeColumnsToContents();
+    ui.PdeSettingsTableWidget->setColumnWidth(1, 205);
 }
 
 std::shared_ptr<PdeSettings> MainWindow::init_pde_settings(QString pde_settings_filename)
