@@ -22,7 +22,7 @@ MainWindow::MainWindow(QWidget *parent)
 	m_PdeSettings = init_pde_settings(m_pde_settings_filename);
 
     init_graph();
-	init_PdeSettingsTableWidget(m_PdeSettings->toQVariantMap());
+    init_PdeSettingsTableWidget(*m_PdeSettings);
     init_EquationComboBox();
 }
 
@@ -60,19 +60,19 @@ void MainWindow::start()
     ui.EquationComboBox->setDisabled(true);
 
     m_GraphThread.start();
-    change_pde_solver("Wave equation");
+    change_pde_solver("Heat equation");
 
     //set the current value of EquationComboBox
     int i;
     for (i = 0; i < ui.EquationComboBox->count(); ++i)
     {
-        if (ui.EquationComboBox->itemText(i) == "Wave equation")
+        if (ui.EquationComboBox->itemText(i) == "Heat equation")
         {
             ui.EquationComboBox->setCurrentIndex(i);
             break;
         }
     }
-    if (i == ui.EquationComboBox->count()) throw("Error: \"Wave equation\" not found in ui.EquationComboBox");
+    if (i == ui.EquationComboBox->count()) throw("Error: \"Heat equation\" not found in ui.EquationComboBox");
 
     m_PdeSolver->solve(*m_PdeSettings);
 
@@ -268,23 +268,27 @@ void MainWindow::GraphTimeSpeedSlider_changed(int action)
     }
 }
 
-void MainWindow::init_PdeSettingsTableWidget(QVariantMap pde_settings_map)
+void MainWindow::init_PdeSettingsTableWidget(const PdeSettings& set)
 {
 	ui.PdeSettingsTableWidget->verticalHeader()->setVisible(false);
 	ui.PdeSettingsTableWidget->setRowCount(0);
 	int n_row = 0;
-	for (QVariantMap::const_iterator iter = pde_settings_map.begin(); iter != pde_settings_map.end(); ++iter)
+
+    QVariantMap values_map = set.toQVariantMap();
+    QVariantMap tooltip_map = set.getQVariantMapToolTips();
+    for (QVariantMap::const_iterator iter = values_map.begin(); iter != values_map.end(); ++iter)
 	{
 		ui.PdeSettingsTableWidget->insertRow(n_row);
 
-		QTableWidgetItem *key = new QTableWidgetItem(0);
-		QTableWidgetItem *value = new QTableWidgetItem(0);
+        QTableWidgetItem *key = new QTableWidgetItem(0);
+        QTableWidgetItem *value = new QTableWidgetItem(0);
 
-		key->setText(iter.key());
-		value->setText(iter.value().toString());
+        key->setText(iter.key());
+        key->setToolTip(tooltip_map[iter.key()].value<QString>());
+        value->setText(iter.value().toString());
 
-		ui.PdeSettingsTableWidget->setItem(n_row, 0, key);
-		ui.PdeSettingsTableWidget->setItem(n_row, 1, value);
+        ui.PdeSettingsTableWidget->setItem(n_row, 0, key);
+        ui.PdeSettingsTableWidget->setItem(n_row, 1, value);
 
 		++n_row;
 	}
@@ -418,16 +422,20 @@ void MainWindow::clear_graph_data(PdeSolverBase::GraphData_t& graph_data)
 QSurfaceDataArray* newSurfaceDataArrayFromSource(QSurfaceDataArray& source_surface_data_array,
                                                  std::function<void(QSurfaceDataItem&)> modifier)
 {
+    if (source_surface_data_array.empty()) return new QSurfaceDataArray();
+
 	int sampleCount = source_surface_data_array.size();
+    int countX = source_surface_data_array[0]->size();
+
 	auto newArray = new QSurfaceDataArray();
 	newArray->reserve(sampleCount);
-	for (int i(0); i < sampleCount; i++)
-		newArray->append(new QSurfaceDataRow(sampleCount));
-    for (int i(0); i < sampleCount; i++)
+
+    for (int i = 0; i < sampleCount; i++)
     {
+        newArray->append(new QSurfaceDataRow(countX));
 		const QSurfaceDataRow& sourceRow = *(source_surface_data_array.at(i));
 		QSurfaceDataRow& row = *(*newArray)[i];
-        for (int j(0); j < sampleCount; j++)
+        for (int j = 0; j < countX; j++)
         {
 			row[j].setPosition(sourceRow.at(j).position());
 			modifier(row[j]);
@@ -462,9 +470,14 @@ void MainWindow::EvaluatePushButton_clicked()
 
     //reading from ui.PdeSettingsTableWidget
     QVariantMap map;
+    QString key, value;
     int rowCount = ui.PdeSettingsTableWidget->rowCount();
     for (int i = 0; i < rowCount; ++i)
-        map.insert(ui.PdeSettingsTableWidget->item(i, 0)->text(), ui.PdeSettingsTableWidget->item(i, 1)->text());
+    {
+        key = ui.PdeSettingsTableWidget->item(i, 0)->text();
+        value = ui.PdeSettingsTableWidget->item(i, 1)->text();
+        map.insert(key, value);
+    }
 
     m_PdeSolver->solve(PdeSettings(map));
 }

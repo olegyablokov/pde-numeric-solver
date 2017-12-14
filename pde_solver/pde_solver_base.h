@@ -27,18 +27,18 @@ class PdeSolverBase : public QObject
 
 public:
     /**
-     * @brief Slice of graph data
+     * @brief A slice of graph data.
      * @tparam QtDataVisualization::QSurfaceDataArray* A pointer to the u(x, t) data slice (with a fixed t)
-     * @tparam QtDataVisualization::QSurfaceDataArray* A pointer to the partial derivative du/dt(x, t) data slice (with a fixed t)
+     * @tparam QtDataVisualization::QSurfaceDataArray* A pointer to the partial derivative 𝛿u/𝛿t(x, t) data slice (with a fixed t)
      */
     typedef std::pair<QtDataVisualization::QSurfaceDataArray*, QtDataVisualization::QSurfaceDataArray*> GraphDataSlice_t;
 
     /**
-     * @brief Slices of graph data
+     * @brief Slices of graph data.
      * @tparam QList<QtDataVisualization::QSurfaceDataArray*> A list of slices. Here the index of Qlist is time and the array pointers are time slices of the u(x, t) function
-     * @tparam QList<QtDataVisualization::QSurfaceDataArray*> A list of slices. Here the index of Qlist is time and the array pointers are time slices of the partial du/dt(x, t) function
+     * @tparam QList<QtDataVisualization::QSurfaceDataArray*> A list of slices. Here the index of Qlist is time and the array pointers are time slices of the partial 𝛿u/𝛿t(x, t) function
      */
-    typedef std::pair<QList<QtDataVisualization::QSurfaceDataArray*>, QList<QtDataVisualization::QSurfaceDataArray*>> GraphData_t;  // first - u(x,t), second - partial du/dt(x,t) (here t is fixed)
+    typedef std::pair<QList<QtDataVisualization::QSurfaceDataArray*>, QList<QtDataVisualization::QSurfaceDataArray*>> GraphData_t;  // first - u(x,t), second - partial 𝛿u/𝛿t(x,t) (here t is fixed)
 
     /**
      * @brief The output type of a solution.
@@ -54,12 +54,18 @@ public:
     virtual ~PdeSolverBase();
 
 public slots:
+    /**
+     * @brief The method which just emits the solve_invoked(const PdeSettings&) signal.
+     */
     void solve(const PdeSettings& set);
 
 private slots:
     /**
-     * @brief The signal which is emmited when a solution generation is requested.
+     * @brief The method which is called when a solution generation is requested.
+     *
+     * The method should emit the solution_generated(PdeSolverBase::GraphSolution_t) signal when the data is generated.
      * @param set settings used for generating a solution
+     * @see solution_generated(PdeSolverBase::GraphSolution_t)
      */
     virtual void get_solution(const PdeSettings& set);
 
@@ -69,6 +75,14 @@ signals:
      * @see solve(const PdeSettings& set)
      */
     void solution_generated(PdeSolverBase::GraphSolution_t);
+
+    /**
+     * @brief The signal which is emmited when the solve(const PdeSettings& set) method is invoked.
+     *
+     * The signal is meant to be emmited when a request for a solution is recieved.\n
+     * It is connected in the base constructor to the get_solution(const PdeSettings& set) method.
+     * @see solve(const PdeSettings& set)
+     */
     void solve_invoked(const PdeSettings&);
 
     /**
@@ -80,7 +94,7 @@ signals:
 
 protected:
     /**
-     * @brief The method for getting initial conditions (such as u(x, 0) and partial du/dt(x, 0)) provided by the set parameter.
+     * @brief The method for getting initial conditions (such as u(x, 0) and partial 𝛿u/𝛿t(x, 0)) provided by the set parameter.
      */
     GraphDataSlice_t get_initial_conditions(const PdeSettings& set);
 

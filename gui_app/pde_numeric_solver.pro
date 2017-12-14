@@ -1,12 +1,16 @@
-#TARGET = ../build/gui_app
 TEMPLATE = app
 QT += core widgets gui datavisualization script
 DEFINES += QT_DEPRECATED_WARNINGS
 
 DIR = ../build
 NAME = gui_app
-debug:CONFIGURATION = debug
-else:CONFIGURATION = release
+
+CONFIG(release, debug|release) {
+  CONFIGURATION = release
+}
+CONFIG(debug, debug|release) {
+  CONFIGURATION = debug
+}
 
 DESTDIR = $${DIR}/$${NAME}_$${CONFIGURATION}
 OBJECTS_DIR = $${DESTDIR}/.obj
@@ -28,21 +32,6 @@ SOURCES += main.cpp \
 	../pde_solver/pde_solver_base.cpp \
 	../math_module/math_module.cpp
 FORMS += mainwindow.ui
-
-#_______________________________________
-#DESTDIR = ../x64/Debug
-#CONFIG += debug
-#INCLUDEPATH += ./GeneratedFiles \
-#    . \
-#    ./GeneratedFiles/Debug
-#DEPENDPATH += .
-#MOC_DIR += ./GeneratedFiles/debug
-#OBJECTS_DIR += debug
-#UI_DIR += ./GeneratedFiles
-#RCC_DIR += ./GeneratedFiles
-
-#SUBDIRS += \
-#    pde_numeric_solver.pro
 
 DISTFILES += \
     ../TODO.txt

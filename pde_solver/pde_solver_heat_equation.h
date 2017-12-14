@@ -3,6 +3,9 @@
 
 #include "pde_solver_base.h"
 
+/**
+ * @brief A class for solving the 2d heat equation.
+ */
 class PdeSolverHeatEquation : public PdeSolverBase
 {
     Q_OBJECT

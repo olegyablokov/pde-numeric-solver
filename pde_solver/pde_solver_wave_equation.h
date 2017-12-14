@@ -3,6 +3,9 @@
 
 #include "pde_solver_base.h"
 
+/**
+ * @brief A class for solving the 2d wave equation.
+ */
 class PdeSolverWaveEquation : public PdeSolverBase
 {
     Q_OBJECT

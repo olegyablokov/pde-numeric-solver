@@ -71,7 +71,7 @@ public slots:
 
 private:
     void init_graph();
-    void init_PdeSettingsTableWidget(QVariantMap pde_settings_map);
+    void init_PdeSettingsTableWidget(const PdeSettings& set);
 	std::shared_ptr<PdeSettings> init_pde_settings(QString pde_settings_filename);
     void init_EquationComboBox();
 

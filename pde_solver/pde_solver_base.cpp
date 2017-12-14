@@ -42,7 +42,7 @@ PdeSolverBase::GraphDataSlice_t PdeSolverBase::get_initial_conditions(const PdeS
 {
     qDebug() << "PdeSolverBase::get_initial_conditions invoked";
     auto cur_array = new QSurfaceDataArray();
-    auto cur_array_t = new QSurfaceDataArray();  // partial du/dt
+    auto cur_array_t = new QSurfaceDataArray();  // partial 𝛿u/𝛿t
 
     cur_array->reserve(set.countX);
     cur_array_t->reserve(set.countX);
