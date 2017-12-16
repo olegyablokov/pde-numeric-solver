@@ -31,21 +31,22 @@ void PdeSolverBase::solve(const PdeSettings& set)
 
 void PdeSolverBase::clear_graph_data_slice(PdeSolverBase::GraphDataSlice_t& data_slice)
 {
-    for (auto& row_ptr : *data_slice.first) delete row_ptr;
-    delete data_slice.first;
+    for (auto& row_ptr : *data_slice.u) delete row_ptr;
+    delete data_slice.u;
 
-    for (auto& row_ptr : *data_slice.second) delete row_ptr;
-    delete data_slice.second;
+    for (auto& row_ptr : *data_slice.u_t) delete row_ptr;
+    delete data_slice.u_t;
 }
 
 PdeSolverBase::GraphDataSlice_t PdeSolverBase::get_initial_conditions(const PdeSettings& set)
 {
     qDebug() << "PdeSolverBase::get_initial_conditions invoked";
-    auto cur_array = new QSurfaceDataArray();
-    auto cur_array_t = new QSurfaceDataArray();  // partial 𝛿u/𝛿t
+    GraphDataSlice_t graph_data_slice;
+    graph_data_slice.u = new QSurfaceDataArray();
+    graph_data_slice.u_t = new QSurfaceDataArray();  // partial 𝛿u/𝛿t
 
-    cur_array->reserve(set.countX);
-    cur_array_t->reserve(set.countX);
+    graph_data_slice.u->reserve(set.countX);
+    graph_data_slice.u_t->reserve(set.countX);
 
 	int x_count = 0, y_count = 0;
     for (float x_val = set.minX; x_val < set.maxX; x_val += set.stepX)
@@ -65,15 +66,18 @@ PdeSolverBase::GraphDataSlice_t PdeSolverBase::get_initial_conditions(const PdeS
 
             emit solution_progress_update("Computing initial conditions...", int(float(x_count * 100) / set.countX));
         }
-		cur_array->push_back(row);
-        cur_array_t->push_back(row_t);
+        graph_data_slice.u->push_back(row);
+        graph_data_slice.u_t->push_back(row_t);
 		++x_count;
 	}
     qDebug() << "PdeSolverBase::get_initial_conditions returned";
-    return std::make_pair(cur_array, cur_array_t);
+
+    return graph_data_slice;
 }
 
 void PdeSolverBase::get_solution(const PdeSettings& set)
 {
     throw("Error: calling PdeSolverBase::get_solution method (it is a base class)");
 }
+
+//PdeSolverBase::GraphDataSlice_t::GraphDataSlice_t(QtDataVisualization::QSurfaceDataArray* u_, QtDataVisualization::QSurfaceDataArray* u_t) { u = u_; u_t = u_t_; }

@@ -28,27 +28,34 @@ class PdeSolverBase : public QObject
 public:
     /**
      * @brief A slice of graph data.
-     * @tparam QtDataVisualization::QSurfaceDataArray* A pointer to the u(x, t) data slice (with a fixed t)
-     * @tparam QtDataVisualization::QSurfaceDataArray* A pointer to the partial derivative 𝛿u/𝛿t(x, t) data slice (with a fixed t)
      */
-    typedef std::pair<QtDataVisualization::QSurfaceDataArray*, QtDataVisualization::QSurfaceDataArray*> GraphDataSlice_t;
+    struct GraphDataSlice_t
+    {
+        QtDataVisualization::QSurfaceDataArray* u;      /**< The pointer to the u(x, t) data slice (with a fixed t) */
+        QtDataVisualization::QSurfaceDataArray* u_t;    /**< The pointer to the partial derivative 𝛿u/𝛿t(x, t) data slice (with a fixed t) */
+        bool coord_are_polar = false;
+    };
 
     /**
      * @brief Slices of graph data.
-     * @tparam QList<QtDataVisualization::QSurfaceDataArray*> A list of slices. Here the index of Qlist is time and the array pointers are time slices of the u(x, t) function
-     * @tparam QList<QtDataVisualization::QSurfaceDataArray*> A list of slices. Here the index of Qlist is time and the array pointers are time slices of the partial 𝛿u/𝛿t(x, t) function
      */
-    typedef std::pair<QList<QtDataVisualization::QSurfaceDataArray*>, QList<QtDataVisualization::QSurfaceDataArray*>> GraphData_t;  // first - u(x,t), second - partial 𝛿u/𝛿t(x,t) (here t is fixed)
+    struct GraphData_t
+    {
+        QList<QtDataVisualization::QSurfaceDataArray*> u_list;      /**< A list of slices. Here the index of Qlist is time and the array pointers are time slices of the u(x, t) function */
+        QList<QtDataVisualization::QSurfaceDataArray*> u_t_list;    /**< A list of slices. Here the index of Qlist is time and the array pointers are time slices of the partial 𝛿u/𝛿t(x, t) function */
+        bool coord_are_polar = false;
+    };
 
     /**
      * @brief The output type of a solution.
      * @see get_solution(const PdeSettings& set)
      */
-    typedef struct
+    struct GraphSolution_t
     {
         GraphData_t graph_data;
         PdeSettings set;
-    } GraphSolution_t;
+        bool coord_are_polar = false;
+    };
 
     PdeSolverBase(QObject *parent = NULL);
     virtual ~PdeSolverBase();

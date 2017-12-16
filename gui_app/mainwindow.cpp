@@ -352,6 +352,7 @@ void MainWindow::graph_solution_generated(PdeSolverBase::GraphSolution_t solutio
     m_graph_data = solution.graph_data;
     *m_PdeSettings = solution.set;
 
+    m_graph->setPolar(solution.coord_are_polar);
     m_graph->axisZ()->setRange(m_PdeSettings->minX, m_PdeSettings->maxX);
     m_graph->axisX()->setRange(m_PdeSettings->minY, m_PdeSettings->maxY);
 
@@ -399,7 +400,7 @@ void MainWindow::change_pde_solver(QString value)
 
 void MainWindow::clear_graph_data(PdeSolverBase::GraphData_t& graph_data)
 {
-    for (auto& array_ptr : graph_data.first)
+    for (auto& array_ptr : graph_data.u_list)
     {
         for (auto& row_ptr : *array_ptr)
         {
@@ -407,9 +408,9 @@ void MainWindow::clear_graph_data(PdeSolverBase::GraphData_t& graph_data)
         }
         delete array_ptr;
     }
-    graph_data.first.clear();
+    graph_data.u_list.clear();
 
-    for (auto& array_ptr : graph_data.second)
+    for (auto& array_ptr : graph_data.u_t_list)
     {
         for (auto& row_ptr : *array_ptr)
         {
@@ -417,7 +418,7 @@ void MainWindow::clear_graph_data(PdeSolverBase::GraphData_t& graph_data)
         }
         delete array_ptr;
     }
-    graph_data.second.clear();
+    graph_data.u_t_list.clear();
 }
 
 QSurfaceDataArray* newSurfaceDataArrayFromSource(QSurfaceDataArray& source_surface_data_array,
@@ -449,7 +450,7 @@ void MainWindow::set_TimeSlice(int new_time_slice)
 {
     m_current_time_slice = new_time_slice;
 
-    auto qsurface_data_array = m_graph_data.first.at(m_current_time_slice);
+    auto qsurface_data_array = m_graph_data.u_list.at(m_current_time_slice);
     auto modifier = [](QSurfaceDataItem item) -> void { item.position(); };
 
     m_series->dataProxy()->resetArray(newSurfaceDataArrayFromSource(*qsurface_data_array, modifier));

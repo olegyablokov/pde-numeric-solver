@@ -9,3 +9,4 @@ FEATURES:
 	generating initial conditions is very slow, possibly due to QScriptEngine. make it work faster;
 	add a stability checking and approximation display on GUI;
 	add different solving methods (like implicit/explicit methods, Crank-Nicolson method etc.);
+	add polar coordinates support;
