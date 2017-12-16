@@ -5,9 +5,7 @@
 
 PdeSettings::PdeSettings()
 {
-    stepX = (maxX - minX) / float(countX);
-    stepY = (maxY - minY) / float(countY);
-    stepT = (maxT - minT) / float(countT);
+    set_boundaries();
 }
 
 PdeSettings::PdeSettings(QVariantMap& map)
@@ -67,16 +65,15 @@ void PdeSettings::reset(QVariantMap& map)
     }
     if (map.contains("countT")) countT = map["countT"].value<int>();
 
-    if (map.contains("minX")) minX = map["minX"].value<float>();
-    if (map.contains("maxX")) maxX = map["maxX"].value<float>();
-    if (map.contains("minY")) minY = map["minY"].value<float>();
-    if (map.contains("maxY")) maxY = map["maxY"].value<float>();
-    if (map.contains("minT")) minT = map["minT"].value<float>();
-    if (map.contains("maxT")) maxT = map["maxT"].value<float>();
+    if (map.contains("stepX(Y)"))
+    {
+        stepX = map["stepX(Y)"].value<float>();
+        stepY = stepX;
+    }
+    if (map.contains("stepT")) stepT = map["stepT"].value<float>();
 
-    stepX = (maxX - minX) / float(countX);
-    stepY = (maxY - minY) / float(countY);
-    stepT = (maxT - minT) / float(countT);
+    //ensure the grid fits the area
+    set_boundaries();
 }
 
 QVariantMap PdeSettings::toQVariantMap() const
@@ -92,12 +89,8 @@ QVariantMap PdeSettings::toQVariantMap() const
     map.insert("countX(Y)", countX);
     map.insert("countT", countT);
 
-    map.insert("minX", minX);
-    map.insert("maxX", maxX);
-    map.insert("minY", minY);
-    map.insert("maxY", maxY);
-    map.insert("minT", minT);
-    map.insert("maxT", maxT);
+    map.insert("stepX(Y)", stepX);
+    map.insert("stepT", stepT);
 
     return map;
 }
@@ -115,12 +108,20 @@ QVariantMap PdeSettings::getQVariantMapToolTips() const
     map.insert("countX(Y)", "The number of nodes along the X and Y axis");
     map.insert("countT", "The number of nodes along the T axis");
 
-    map.insert("minX", "The minimum X value of the grid");
-    map.insert("maxX", "The maximum X value of the grid");
-    map.insert("minY", "The minimum Y value of the grid");
-    map.insert("maxY", "The maximum Y value of the grid");
-    map.insert("minT", "The minimum T value of the grid");
-    map.insert("maxT", "The maximum T value of the grid");
+    map.insert("stepX(Y)", "The step along the X and Y axis");
+    map.insert("stepT", "The step along the T axis");
 
     return map;
+}
+
+void PdeSettings::set_boundaries()
+{
+    maxX = (stepX * countX) / 2;
+    minX = -maxX;
+
+    maxY = (stepY * countY) / 2;
+    minY = -maxY;
+
+    maxT = (stepT * countT);
+    minT = 0;
 }

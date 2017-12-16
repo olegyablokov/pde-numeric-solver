@@ -1,6 +1,5 @@
 BUGS:
 	(!IMPORTANT!) wave equation solution is unstable (why?);
-	memory leak when recalculating the graph data;  // partly(?) solved
 	somehow remove the empty place at the top of group boxes (Qt bug, meh);
 	cannot declare a QScriptEngine instance in the PdeSettings class (why?);
 
@@ -8,5 +7,5 @@ FEATURES:
 	add the ability to stop a current calculation (the new data must be deleted properly);
 	add explicit calculation of pde (maybe add some graphs for numerical soulution occuracy?);
 	generating initial conditions is very slow, possibly due to QScriptEngine. make it work faster;
-	add a checking that step of any coordinate cannot be changed from GUI to greater or equal to 1;
+	add a stability checking and approximation display on GUI;
 	add different solving methods (like implicit/explicit methods, Crank-Nicolson method etc.);

@@ -147,7 +147,7 @@ void MainWindow::init_graph()
     m_GraphTimeSpeedLabel->setMinimumWidth(200);
 
     m_GraphTimeSpeedSlider->setMinimum(10);
-    m_GraphTimeSpeedSlider->setMaximum(1000);
+    m_GraphTimeSpeedSlider->setMaximum(200);
     m_GraphTimeSpeedSlider->setSingleStep(1);
     m_GraphTimeSpeedSlider->setValue(m_graph_update_time_step);
 

@@ -111,14 +111,14 @@ PdeSolverBase::GraphDataSlice_t PdeSolverWaveEquation::alternating_direction_met
             if (index2 >= max_index2 - 1) next_ind2 = index2;
             else next_ind2 = index2 + 1;
 
-            if ((index1 == 0) || (index2 == 0) || (index1 == max_index1 - 1) || (index2 == max_index2 - 1))
+/*            if ((index1 == 0) || (index2 == 0) || (index1 == max_index1 - 1) || (index2 == max_index2 - 1))
             {
                 u1 = 0;
-                u2 = (4 / set.stepT / set.stepT - 2 * set.c * set.c / step2 / step2) * prev_graph_data_slice.first->at(index1)->at(index2).y();
+                u2 = 0; //(4 / set.stepT / set.stepT - 2 * set.c * set.c / step2 / step2) * prev_graph_data_slice.first->at(index1)->at(index2).y();
                 u3 = 0;
-                u4 = (2 / set.stepT) * prev_graph_data_slice.second->at(index1)->at(index2).y();
+                u4 = 0; //(2 / set.stepT) * prev_graph_data_slice.second->at(index1)->at(index2).y();
             }
-            else if (stencil == 'x')
+            else*/ if (stencil == 'x')
             {
                 u1 = set.c * set.c / step2 / step2 * prev_graph_data_slice.first->at(index1)->at(prev_ind2).y();
                 u2 = (4 / set.stepT / set.stepT - 2 * set.c * set.c / step2 / step2) * prev_graph_data_slice.first->at(index1)->at(index2).y();

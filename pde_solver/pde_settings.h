@@ -37,16 +37,16 @@ public:
     int countY = 50;    /**< The number of nodes along the Y axis */
     int countT = 1;     /**< The number of nodes along the T axis */
 
-    float minX = -10.0f;    /**< The minimum X value of the grid */
-    float maxX = 10.0f;     /**< The maximum X value of the grid */
-    float minY = -10.0f;    /**< The minimum Y value of the grid */
-    float maxY = 10.0f;     /**< The maximum Y value of the grid */
-    float minT = 0.0f;      /**< The minimum T value of the grid */
-    float maxT = 0.08f;     /**< The maximum T value of the grid */
+    float minX;         /**< The minimum X value of the grid */
+    float maxX;         /**< The maximum X value of the grid */
+    float minY;         /**< The minimum Y value of the grid */
+    float maxY;         /**< The maximum Y value of the grid */
+    float minT;         /**< The minimum T value of the grid */
+    float maxT;         /**< The maximum T value of the grid */
 
-    float stepX;  /**< The step along the X axis */
-    float stepY;  /**< The step along the Y axis */
-    float stepT;  /**< The step along the T axis */
+    float stepX = 0.1;  /**< The step along the X axis */
+    float stepY = 0.1;  /**< The step along the Y axis */
+    float stepT = 0.1;  /**< The step along the T axis */
 
     /**
      * @brief A method for changing the object data from a QVariantMap.
@@ -87,6 +87,7 @@ private:
     QString V1_str = "30*pow(E, -(abs(x)+abs(y))/5)*sin((abs(x)+abs(y)))";
     QString V2_str = "R";
 
+    void set_boundaries();
     float evaluate_expression(QString expression, QVector2D x) const;
 };
 
