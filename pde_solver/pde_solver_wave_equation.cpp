@@ -17,7 +17,7 @@ PdeSolverWaveEquation::~PdeSolverWaveEquation()
 QVector<SolutionMethod_t> PdeSolverWaveEquation::get_implemented_methods()
 {
     QVector<SolutionMethod_t> methods;
-    methods.push_back(PdeSolver::SolutionMethod_t("Crank-Nikolson", "Polar"));
+    methods.push_back(PdeSolver::SolutionMethod_t("Crank-Nicolson", "Polar"));
     return methods;
 }
 

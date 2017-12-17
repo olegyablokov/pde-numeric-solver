@@ -50,10 +50,10 @@ void PdeSettings::set_coords_type(CoordsType new_type, int new_dim)
     {
         V1_str = "10 * sin(R)  * abs(cos(6 * sin(PI * F / 3) + R))";
         V2_str = "R";
-        m_Coords.push_back(CoordGridSet_t(50, 0.1, 0, 1, "R"));
+        m_Coords.push_back(CoordGridSet_t(120, 0.1, 0, 1, "R"));
         for (int i = 1; i < new_dim; ++i)
         {
-            m_Coords.push_back(CoordGridSet_t(30, 0.1, 0, 1, "F" + QString::number(i)));
+            m_Coords.push_back(CoordGridSet_t(40, 0.1, 0, 1, "F" + QString::number(i)));
         }
         m_Coords.push_back(CoordGridSet_t(400, 0.03, 0, 1, "T"));
     }

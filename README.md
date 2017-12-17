@@ -9,6 +9,9 @@ The project is configured with QMake. If you encounter problems with linking ple
 
 The program is meant to be platform-independent, although it is tested only on Linux Mint 18.2 Cinnamon 64-bit.
 
+## Docs
+The project supports auto-documentation by [Doxygen](www.doxygen.org). To generate docs, go to docs/ and type 'doxygen Doxyfile'. 'html' and 'latex' directories will appear. The default page for html files is html/index.html.
+
 ## Images
 ![screenshot](https://github.com/oyyablokov/pde_numeric_solver/blob/master/images/heat_equation1.png)
 ![screenshot](https://github.com/oyyablokov/pde_numeric_solver/blob/master/images/wave_equation1.png)
