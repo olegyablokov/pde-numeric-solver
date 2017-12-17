@@ -8,10 +8,11 @@
 
 using namespace QtDataVisualization;
 
-Q_DECLARE_METATYPE(PdeSolverBase::GraphDataSlice_t);
-Q_DECLARE_METATYPE(PdeSolverBase::GraphData_t);
-Q_DECLARE_METATYPE(PdeSolverBase::GraphSolution_t);
+Q_DECLARE_METATYPE(PdeSolver::GraphDataSlice_t);
+Q_DECLARE_METATYPE(PdeSolver::GraphData_t);
+Q_DECLARE_METATYPE(PdeSolver::GraphSolution_t);
 Q_DECLARE_METATYPE(PdeSettings);
+Q_DECLARE_METATYPE(PdeSolver::SolutionMethod_t);
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), m_timer(new QTimer()), m_series(new QSurface3DSeries())
@@ -19,11 +20,16 @@ MainWindow::MainWindow(QWidget *parent)
     ui.setupUi(this);
 
 	m_pde_settings_filename = "pde_settings.json";
-	m_PdeSettings = init_pde_settings(m_pde_settings_filename);
+    m_PdeSettings = init_pde_settings(m_pde_settings_filename);
+    m_PdeSettings->set_coords_type(PdeSettings::CoordsType::Polar, 2);
 
-    init_graph();
-    init_PdeSettingsTableWidget(*m_PdeSettings);
     init_EquationComboBox();
+    init_graph();
+    set_PdeSettingsTableWidget(*m_PdeSettings);
+
+    ui.EvaluatePushButton->setDisabled(true);
+    ui.MethodsComboBox->setDisabled(true);
+    ui.EquationComboBox->setDisabled(true);
 }
 
 MainWindow::~MainWindow()
@@ -56,84 +62,30 @@ void MainWindow::start()
     connect(ui.EvaluatePushButton, SIGNAL(clicked()), this, SLOT(EvaluatePushButton_clicked()));
     connect(m_timer, SIGNAL(timeout()), this, SLOT(update_TimeSlice()));
 
-    ui.EvaluatePushButton->setDisabled(true);
-    ui.EquationComboBox->setDisabled(true);
-
     m_GraphThread.start();
-    change_pde_solver("Heat equation");
+    change_pde_solver("Wave equation");
 
-    //set the current value of EquationComboBox
-    int i;
-    for (i = 0; i < ui.EquationComboBox->count(); ++i)
-    {
-        if (ui.EquationComboBox->itemText(i) == "Heat equation")
-        {
-            ui.EquationComboBox->setCurrentIndex(i);
-            break;
-        }
-    }
-    if (i == ui.EquationComboBox->count()) throw("Error: \"Heat equation\" not found in ui.EquationComboBox");
-
-    m_PdeSolver->solve(*m_PdeSettings);
-
-    //connect(ui.PdeSettingsTableWidget, SIGNAL(cellClicked(int, int)), this, SLOT(PdeSettingsTableWidgetCellClickedSlot(int, int)));
+    m_PdeSolver->solve(*m_PdeSettings, ui.MethodsComboBox->currentData().value<PdeSolver::SolutionMethod_t>());
 }
-
-//void MainWindow::PdeSettingsTableWidgetCellClickedSlot(int row, int column)
-//{
-//    if(!((row == 0) && (column == 1))) return;
-
-//    QString program = ui.PdeSettingsTableWidget->itemAt(row, column)->text();
-//    QScriptEngine expression;
-
-//    QColor color;
-//    if (expression.canEvaluate(program))
-//    {
-//        ui.EvaluatePushButton->setDisabled(false);
-//        color.setRgb(0, 255, 0);
-//    }
-//    else
-//    {
-//        ui.EvaluatePushButton->setDisabled(true);
-//        color.setRgb(255, 0, 0);
-//    }
-//    ui.PdeSettingsTableWidget->itemAt(row, 0)->setBackgroundColor(color);
-//    ui.PdeSettingsTableWidget->itemAt(row, 1)->setBackgroundColor(color);
-//}
 
 void MainWindow::init_graph()
 {
-	//QStringList labels;
-	//labels.push_back(QString("LABEL"));
-	//QValue3DAxis axis_y, axis_z;
-	//axis_x.setLabels(labels);
-
     m_graph = new Q3DSurface();
     m_graph->setAxisX(new QValue3DAxis);
     m_graph->setAxisY(new QValue3DAxis);
     m_graph->setAxisZ(new QValue3DAxis);
 
-    m_graph->axisZ()->setRange(m_PdeSettings->minX, m_PdeSettings->maxX);
-    m_graph->axisX()->setRange(m_PdeSettings->minY, m_PdeSettings->maxY);
-    m_graph->axisY()->setRange(-20.0f, 20.0f);
-
-    m_graph->axisX()->setLabelFormat("%.2f");
-    m_graph->axisY()->setLabelFormat("%.2f");
-    m_graph->axisZ()->setLabelFormat("%.2f");
-
-    m_graph->axisX()->setTitle("Y");
-    m_graph->axisX()->setTitleVisible(true);
-    m_graph->axisY()->setTitle("Z");
-    m_graph->axisY()->setTitleVisible(true);
-    m_graph->axisZ()->setTitle("X");
-    m_graph->axisZ()->setTitleVisible(true);
+    m_PdeSettings->set_coords_type(PdeSettings::CoordsType::Polar, 2);
+    m_graph->axisZ()->setRange(m_PdeSettings->get_coord_by_label("R")->min,
+                               m_PdeSettings->get_coord_by_label("R")->max);
+    m_graph->axisY()->setRange(-10.0f, 10.0f);
 
     m_graph->addSeries(m_series);
 
     QLinearGradient gr;
     gr.setColorAt(0.0, Qt::black);
     gr.setColorAt(0.4, Qt::blue);
-    gr.setColorAt(0.8, Qt::red);
+    gr.setColorAt(0.7, Qt::red);
     gr.setColorAt(1.0, Qt::yellow);
 
     m_graph->seriesList().at(0)->setBaseGradient(gr);
@@ -162,7 +114,7 @@ void MainWindow::init_graph()
     m_GraphCurrentTimeLabel->setMinimumWidth(200);
 
     m_GraphCurrentTimeSlider->setMinimum(0);
-    m_GraphCurrentTimeSlider->setMaximum(m_PdeSettings->countT);
+    m_GraphCurrentTimeSlider->setMaximum(m_PdeSettings->get_coord_by_label("T")->count);
     m_GraphCurrentTimeSlider->setSingleStep(1);
     m_GraphCurrentTimeSlider->setValue(0);
 
@@ -199,15 +151,23 @@ void MainWindow::init_graph()
 
     m_GraphWidget = QWidget::createWindowContainer(m_graph);
 
-    //m_GraphOccuracyLabel = new QLabel("Occuracy: " + QString::number(m_graph_update_time_step));
-    //m_GraphOccuracyLabel->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
-
     ui.GraphLayout->addWidget(m_GraphWidget);
     ui.GraphLayout->addLayout(m_GraphTimeSpeedLayout);
     ui.GraphLayout->addLayout(m_GraphCurrentTimeLayout);
-    //ui.GraphLayout->addWidget(m_GraphOccuracyLabel);
 
     connect(m_GraphTimeSpeedSlider, SIGNAL(actionTriggered(int)), this, SLOT(GraphTimeSpeedSlider_changed(int)));
+
+    //set the current value of EquationComboBox
+    int i;
+    for (i = 0; i < ui.EquationComboBox->count(); ++i)
+    {
+        if (ui.EquationComboBox->itemText(i) == "Wave equation")
+        {
+            ui.EquationComboBox->setCurrentIndex(i);
+            break;
+        }
+    }
+    if (i == ui.EquationComboBox->count()) throw("Error: \"Wave equation\" not found in ui.EquationComboBox");
 }
 
 void MainWindow::toggle_graph_playing(bool play)
@@ -234,7 +194,7 @@ void MainWindow::PlayStopPushButton_clicked()
 void MainWindow::NextSlidePushButton_clicked()
 {
     if (!m_graph_is_valid) return;
-    set_TimeSlice((m_current_time_slice < m_PdeSettings->countT - 1) ? m_current_time_slice + 1 : m_current_time_slice);
+    set_TimeSlice((m_PdeSettings->get_coord_by_label("T")->count - 1) ? m_current_time_slice + 1 : m_current_time_slice);
 }
 
 void MainWindow::PrevSlidePushButton_clicked()
@@ -252,7 +212,7 @@ void MainWindow::FirstSlidePushButton_clicked()
 void MainWindow::LastSlidePushButton_clicked()
 {
     if (!m_graph_is_valid) return;
-    set_TimeSlice(m_PdeSettings->countT - 1);
+    set_TimeSlice(m_PdeSettings->get_coord_by_label("T")->count - 1);
 }
 
 void MainWindow::GraphTimeSpeedSlider_changed(int action)
@@ -268,7 +228,7 @@ void MainWindow::GraphTimeSpeedSlider_changed(int action)
     }
 }
 
-void MainWindow::init_PdeSettingsTableWidget(const PdeSettings& set)
+void MainWindow::set_PdeSettingsTableWidget(const PdeSettings& set)
 {
 	ui.PdeSettingsTableWidget->verticalHeader()->setVisible(false);
 	ui.PdeSettingsTableWidget->setRowCount(0);
@@ -341,7 +301,7 @@ void MainWindow::init_EquationComboBox()
     connect(ui.EquationComboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(change_pde_solver(QString)));
 }
 
-void MainWindow::graph_solution_generated(PdeSolverBase::GraphSolution_t solution)
+void MainWindow::graph_solution_generated(PdeSolver::GraphSolution_t solution)
 {
     qDebug() << "MainWindow::graph_solution_generated invoked";
 
@@ -352,9 +312,22 @@ void MainWindow::graph_solution_generated(PdeSolverBase::GraphSolution_t solutio
     m_graph_data = solution.graph_data;
     *m_PdeSettings = solution.set;
 
-    m_graph->setPolar(solution.coord_are_polar);
-    m_graph->axisZ()->setRange(m_PdeSettings->minX, m_PdeSettings->maxX);
-    m_graph->axisX()->setRange(m_PdeSettings->minY, m_PdeSettings->maxY);
+    //setting graph ranges:
+    if (solution.set.m_CoordsType == PdeSettings::CoordsType::Polar)
+    {
+        m_graph->setPolar(true);
+        m_graph->axisZ()->setRange(m_PdeSettings->get_coord_by_label("R")->min,
+                                   m_PdeSettings->get_coord_by_label("R")->max);
+        m_graph->setAxisX(new QValue3DAxis);
+    }
+    else if (solution.set.m_CoordsType == PdeSettings::CoordsType::Cartesian)
+    {
+        m_graph->setPolar(false);
+        m_graph->axisZ()->setRange(m_PdeSettings->get_coord_by_label("X1")->min,
+                                   m_PdeSettings->get_coord_by_label("X1")->max);
+        m_graph->axisX()->setRange(m_PdeSettings->get_coord_by_label("X2")->min,
+                                   m_PdeSettings->get_coord_by_label("X2")->max);
+    }
 
     qDebug() << "Update timer started";
     m_current_time_slice = 0;
@@ -362,6 +335,7 @@ void MainWindow::graph_solution_generated(PdeSolverBase::GraphSolution_t solutio
     toggle_graph_playing(true);
 
     ui.EvaluatePushButton->setDisabled(false);
+    ui.MethodsComboBox->setDisabled(false);
     ui.EquationComboBox->setDisabled(false);
     if (!m_graph_is_valid)
     {
@@ -370,7 +344,7 @@ void MainWindow::graph_solution_generated(PdeSolverBase::GraphSolution_t solutio
     }
 
     m_GraphCurrentTimeSlider->setMinimum(0);
-    m_GraphCurrentTimeSlider->setMaximum(m_PdeSettings->countT);
+    m_GraphCurrentTimeSlider->setMaximum(m_PdeSettings->get_coord_by_label("T")->count);
 }
 
 void MainWindow::solution_progress_updated(QString msg, int value)
@@ -379,14 +353,13 @@ void MainWindow::solution_progress_updated(QString msg, int value)
     ui.GraphSolutionProgressLabel->setText(msg);
 }
 
-void MainWindow::change_pde_solver(QString value)
+void MainWindow::change_pde_solver(QString new_solver)
 {
-    if (value == "Heat equation")
+    if (new_solver == "Heat equation")
     {
         m_PdeSolver.reset(new PdeSolverHeatEquation());
-
     }
-    else if (value == "Wave equation")
+    else if (new_solver == "Wave equation")
     {
         m_PdeSolver.reset(new PdeSolverWaveEquation());
     }
@@ -395,10 +368,28 @@ void MainWindow::change_pde_solver(QString value)
     m_PdeSolver->moveToThread(&m_GraphThread);
 
     connect(m_PdeSolver.get(), SIGNAL(solution_progress_update(QString, int)), this, SLOT(solution_progress_updated(QString, int)), Qt::QueuedConnection);
-    connect(m_PdeSolver.get(), SIGNAL(solution_generated(PdeSolverBase::GraphSolution_t)), this, SLOT(graph_solution_generated(PdeSolverBase::GraphSolution_t)), Qt::QueuedConnection);
+    connect(m_PdeSolver.get(), SIGNAL(solution_generated(PdeSolver::GraphSolution_t)), this, SLOT(graph_solution_generated(PdeSolver::GraphSolution_t)), Qt::QueuedConnection);
+
+    //set methods combo box:
+    QVector<PdeSolver::SolutionMethod_t> methods = m_PdeSolver->get_implemented_methods();
+    ui.MethodsComboBox->clear();
+    QVariant qvar;
+    for (auto& method : methods)
+    {
+        qvar.setValue(method);
+        ui.MethodsComboBox->addItem(method.name, qvar);
+    }
+    change_pde_settings_coord_system(ui.MethodsComboBox->currentData().value<PdeSolver::SolutionMethod_t>().coord_system);
 }
 
-void MainWindow::clear_graph_data(PdeSolverBase::GraphData_t& graph_data)
+void MainWindow::change_pde_settings_coord_system(QString new_coords_system)
+{
+    if (new_coords_system == "Cartesian") set_PdeSettingsTableWidget(PdeSettings(PdeSettings::CoordsType::Cartesian, 2));
+    else if (new_coords_system == "Polar") set_PdeSettingsTableWidget(PdeSettings(PdeSettings::CoordsType::Polar, 2));
+    else throw("Wrong coords system");
+}
+
+void MainWindow::clear_graph_data(PdeSolver::GraphData_t& graph_data)
 {
     for (auto& array_ptr : graph_data.u_list)
     {
@@ -462,15 +453,11 @@ void MainWindow::set_TimeSlice(int new_time_slice)
 
 void MainWindow::update_TimeSlice()
 {
-    set_TimeSlice((m_current_time_slice < m_PdeSettings->countT - 1) ? m_current_time_slice + 1 : 0);
+    set_TimeSlice((m_current_time_slice < m_PdeSettings->get_coord_by_label("T")->count - 1) ? m_current_time_slice + 1 : 0);
 }
 
-void MainWindow::EvaluatePushButton_clicked()
+PdeSettings MainWindow::get_pde_settings_from_TableWidget()
 {
-    ui.EvaluatePushButton->setDisabled(true);
-    ui.EquationComboBox->setDisabled(true);
-
-    //reading from ui.PdeSettingsTableWidget
     QVariantMap map;
     QString key, value;
     int rowCount = ui.PdeSettingsTableWidget->rowCount();
@@ -481,5 +468,22 @@ void MainWindow::EvaluatePushButton_clicked()
         map.insert(key, value);
     }
 
-    m_PdeSolver->solve(PdeSettings(map));
+    PdeSettings set(*m_PdeSettings);
+
+    QString coords_type = ui.MethodsComboBox->currentData().value<PdeSolver::SolutionMethod_t>().coord_system;
+    if (coords_type == "Cartesian") set.set_coords_type(PdeSettings::CoordsType::Cartesian);
+    else if (coords_type == "Polar") set.set_coords_type(PdeSettings::CoordsType::Polar);
+    else throw("Wrong coords type");
+    set.reset(map);
+
+    return set;
+}
+
+void MainWindow::EvaluatePushButton_clicked()
+{
+    ui.EvaluatePushButton->setDisabled(true);
+    ui.MethodsComboBox->setDisabled(true);
+    ui.EquationComboBox->setDisabled(true);
+
+    m_PdeSolver->solve(get_pde_settings_from_TableWidget(), ui.MethodsComboBox->currentData().value<PdeSolver::SolutionMethod_t>());
 }

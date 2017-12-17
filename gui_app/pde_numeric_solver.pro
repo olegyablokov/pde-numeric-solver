@@ -23,7 +23,8 @@ HEADERS += mainwindow.h \
 	../pde_solver/pde_solver_wave_equation.h \
 	../math_module/math_module.h \
 	../pde_solver/pde_solver_base.h \
-	../pde_solver/pde_settings.h
+	../pde_solver/pde_settings.h \
+    ../pde_solver/pde_solver_structs.h
 SOURCES += main.cpp \
     mainwindow.cpp \
 	../pde_solver/pde_settings.cpp \

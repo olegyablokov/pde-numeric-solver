@@ -14,11 +14,13 @@ public:
     PdeSolverWaveEquation();
     virtual ~PdeSolverWaveEquation();
 
+    virtual QVector<PdeSolver::SolutionMethod_t> get_implemented_methods();
+
 public slots:
-    virtual void get_solution(const PdeSettings& set);
+    virtual void get_solution(const PdeSettings& set, PdeSolver::SolutionMethod_t method);
 
 protected:
-    GraphDataSlice_t alternating_direction_method(const PdeSettings& set, const GraphDataSlice_t& prev_graph_data_slice, char stencil);
+    PdeSolver::GraphDataSlice_t crank_nicolson_method(const PdeSettings& set, const PdeSolver::GraphData_t& graph_data, int t_count);
 };
 
 #endif // PDE_SOLVER_WAVE_EQUATION_H

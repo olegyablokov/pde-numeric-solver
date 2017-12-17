@@ -14,6 +14,7 @@
 #include <sys/types.h>
 
 #include "pde_settings.h"
+#include "pde_solver_structs.h"
 
 /**
  * @brief The base class for pde solvers.
@@ -26,45 +27,16 @@ class PdeSolverBase : public QObject
     Q_OBJECT
 
 public:
-    /**
-     * @brief A slice of graph data.
-     */
-    struct GraphDataSlice_t
-    {
-        QtDataVisualization::QSurfaceDataArray* u;      /**< The pointer to the u(x, t) data slice (with a fixed t) */
-        QtDataVisualization::QSurfaceDataArray* u_t;    /**< The pointer to the partial derivative 𝛿u/𝛿t(x, t) data slice (with a fixed t) */
-        bool coord_are_polar = false;
-    };
-
-    /**
-     * @brief Slices of graph data.
-     */
-    struct GraphData_t
-    {
-        QList<QtDataVisualization::QSurfaceDataArray*> u_list;      /**< A list of slices. Here the index of Qlist is time and the array pointers are time slices of the u(x, t) function */
-        QList<QtDataVisualization::QSurfaceDataArray*> u_t_list;    /**< A list of slices. Here the index of Qlist is time and the array pointers are time slices of the partial 𝛿u/𝛿t(x, t) function */
-        bool coord_are_polar = false;
-    };
-
-    /**
-     * @brief The output type of a solution.
-     * @see get_solution(const PdeSettings& set)
-     */
-    struct GraphSolution_t
-    {
-        GraphData_t graph_data;
-        PdeSettings set;
-        bool coord_are_polar = false;
-    };
-
     PdeSolverBase(QObject *parent = NULL);
     virtual ~PdeSolverBase();
+
+    virtual QVector<PdeSolver::SolutionMethod_t> get_implemented_methods();
 
 public slots:
     /**
      * @brief The method which just emits the solve_invoked(const PdeSettings&) signal.
      */
-    void solve(const PdeSettings& set);
+    void solve(const PdeSettings& set, PdeSolver::SolutionMethod_t method);
 
 private slots:
     /**
@@ -74,14 +46,14 @@ private slots:
      * @param set settings used for generating a solution
      * @see solution_generated(PdeSolverBase::GraphSolution_t)
      */
-    virtual void get_solution(const PdeSettings& set);
+    virtual void get_solution(const PdeSettings& set, PdeSolver::SolutionMethod_t method);
 
 signals:
     /**
      * @brief The signal which is emmited when the graph data is generated.
      * @see solve(const PdeSettings& set)
      */
-    void solution_generated(PdeSolverBase::GraphSolution_t);
+    void solution_generated(PdeSolver::GraphSolution_t);
 
     /**
      * @brief The signal which is emmited when the solve(const PdeSettings& set) method is invoked.
@@ -90,7 +62,7 @@ signals:
      * It is connected in the base constructor to the get_solution(const PdeSettings& set) method.
      * @see solve(const PdeSettings& set)
      */
-    void solve_invoked(const PdeSettings&);
+    void solve_invoked(const PdeSettings&, PdeSolver::SolutionMethod_t);
 
     /**
      * @brief Used for sending data progress.
@@ -103,12 +75,14 @@ protected:
     /**
      * @brief The method for getting initial conditions (such as u(x, 0) and partial 𝛿u/𝛿t(x, 0)) provided by the set parameter.
      */
-    GraphDataSlice_t get_initial_conditions(const PdeSettings& set);
+    PdeSolver::GraphDataSlice_t get_initial_conditions_in_polar_coords(const PdeSettings& set);
+
+    PdeSolver::GraphDataSlice_t get_initial_conditions_in_cartesian_coords(const PdeSettings& set);
 
     /**
      * @brief The method is used for clearing a slice. If not use it, memory leacks will appear.
      */
-    void clear_graph_data_slice(GraphDataSlice_t& data_slice);
+    void clear_graph_data_slice(PdeSolver::GraphDataSlice_t& data_slice);
 };
 
 #endif //PDE_SOLVER_H

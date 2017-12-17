@@ -2,6 +2,7 @@
 #include "../math_module/math_module.h"
 
 using namespace QtDataVisualization;
+using namespace PdeSolver;
 
 PdeSolverWaveEquation::PdeSolverWaveEquation() : PdeSolverBase()
 {
@@ -13,43 +14,38 @@ PdeSolverWaveEquation::~PdeSolverWaveEquation()
 
 }
 
-void PdeSolverWaveEquation::get_solution(const PdeSettings& set)
+QVector<SolutionMethod_t> PdeSolverWaveEquation::get_implemented_methods()
 {
+    QVector<SolutionMethod_t> methods;
+    methods.push_back(PdeSolver::SolutionMethod_t("Crank-Nikolson", "Polar"));
+    return methods;
+}
+
+void PdeSolverWaveEquation::get_solution(const PdeSettings& set, SolutionMethod_t method)
+{
+    if (method.coord_system != "Polar") throw("This method can be used only in polar coords");
+
+    const PdeSettings::CoordGridSet_t& coordT = *set.get_coord_by_label("T");
+
     GraphSolution_t solution;
     solution.set = set;
-    solution.graph_data.u_list.reserve(set.countT);
-    solution.graph_data.u_t_list.reserve(set.countT);
+    solution.graph_data.u_list.reserve(coordT.count);
+    solution.graph_data.u_t_list.reserve(coordT.count);
 
-    GraphDataSlice_t init_slice = get_initial_conditions(set);
+    GraphDataSlice_t init_slice = get_initial_conditions_in_polar_coords(set);
     solution.graph_data.u_list.push_back(init_slice.u);
     solution.graph_data.u_t_list.push_back(init_slice.u_t);
 
-//    //explicit solution
-//    double val = MathModule::solve_heat_equation_explicitly(QVector2D(1, 1), set.minT, set);
-//    solution.occuracy.push_back(val);
-
-    GraphDataSlice_t cur_graph_data_slice;
-    GraphDataSlice_t half_new_graph_data_slice;
     GraphDataSlice_t new_graph_data_slice;
     int t_count = 1;
-    for (float t_val = set.minT + set.stepT; t_val < set.maxT; t_val += set.stepT)
+    for (float t_val = coordT.min + coordT.step; t_val < coordT.max; t_val += coordT.step)
     {
-        cur_graph_data_slice.u = solution.graph_data.u_list.at(t_count - 1);
-        cur_graph_data_slice.u_t = solution.graph_data.u_t_list.at(t_count - 1);
-
-        half_new_graph_data_slice = alternating_direction_method(set, cur_graph_data_slice, 'x');
-        new_graph_data_slice = alternating_direction_method(set, half_new_graph_data_slice, 'y');
+        new_graph_data_slice = crank_nicolson_method(set, solution.graph_data, t_count);
 
         solution.graph_data.u_list.push_back(new_graph_data_slice.u);
         solution.graph_data.u_t_list.push_back(new_graph_data_slice.u_t);
 
-        clear_graph_data_slice(half_new_graph_data_slice);
-
-//        //explicit solution
-//        double val = MathModule::solve_heat_equation_explicitly(QVector2D(1, 1), t_val, set);
-//        solution.occuracy.push_back(val);
-
-        emit solution_progress_update("Computing the equation...", int(float(t_count * 100) / set.countT));
+        emit solution_progress_update("Computing the equation...", int(float(t_count * 100) / coordT.count));
         ++t_count;
     }
 
@@ -58,99 +54,97 @@ void PdeSolverWaveEquation::get_solution(const PdeSettings& set)
     emit solution_generated(solution);
 }
 
-PdeSolverBase::GraphDataSlice_t PdeSolverWaveEquation::alternating_direction_method(const PdeSettings& set,
-                                                                                    const GraphDataSlice_t& prev_graph_data_slice, char stencil)
+GraphDataSlice_t PdeSolverWaveEquation::crank_nicolson_method(const PdeSettings& set, const GraphData_t& graph_data, int t_count)
 {
-    int max_index1, max_index2;
-    float step1, step2;
-    if (stencil == 'x')
-    {
-        max_index1 = set.countY;
-        max_index2 = set.countX;
-        step1 = set.stepY;
-        step2 = set.stepX;
-    }
-    else if (stencil == 'y')
-    {
-        max_index1 = set.countX;
-        max_index2 = set.countY;
-        step1 = set.stepX;
-        step2 = set.stepY;
-    }
-    else throw("Wrong stencil");
+    const PdeSettings::CoordGridSet_t& coordF = *set.get_coord_by_label("F1");
+    const PdeSettings::CoordGridSet_t& coordR = *set.get_coord_by_label("R");
+    const PdeSettings::CoordGridSet_t& coordT = *set.get_coord_by_label("T");
 
-    GraphDataSlice_t cur_graph_data_slice;
-    cur_graph_data_slice.u = new QSurfaceDataArray();
-    cur_graph_data_slice.u_t = new QSurfaceDataArray();
-    cur_graph_data_slice.u->reserve(max_index1);
-    cur_graph_data_slice.u_t->reserve(max_index1);
+    GraphDataSlice_t cur_graph_data_slice_reversed;
+    cur_graph_data_slice_reversed.u = new QSurfaceDataArray();
+    cur_graph_data_slice_reversed.u_t = new QSurfaceDataArray();
+    cur_graph_data_slice_reversed.u->reserve(coordF.count);
+    cur_graph_data_slice_reversed.u_t->reserve(coordF.count);
 
-    std::vector<float> a(max_index1, -set.c * set.c / step1 / step1);
-    std::vector<float> b(max_index1, 4 / set.stepT / set.stepT + 2 * set.c * set.c / step1 / step1);
-    std::vector<float> c(max_index1, -set.c * set.c / step1 / step1);
+    std::vector<float> a(coordR.count, -qPow(set.c, 2) / qPow(coordR.step, 2));
+    std::vector<float> b(coordR.count);
+    std::vector<float> c(coordR.count);
     std::vector<float> d;
 
-    int prev_ind1 = 0, next_ind1 = 0, prev_ind2 = 0, next_ind2 = 0;
+    int prev_i = 0, next_i = 0, prev_t_count = (t_count > 0) ? t_count - 1 : 0;
+    float u_prev_t = 0.0f;
 
-    float z_val = 0.0f, z_val_t = 0.0f, u1, u2, u3, u4;
-    for (int index1 = 0; index1 < max_index1; ++index1)
+    float z_val = 0.0f, z_val_t = 0.0f, next_R_val = 0, u1, u2, u3, u4;
+    for (int j = 0; j < coordF.count; ++j)
     {
         QSurfaceDataRow *row = new QSurfaceDataRow();
         QSurfaceDataRow *row_t = new QSurfaceDataRow();
-        row->reserve(max_index2);
-        row_t->reserve(max_index2);
+        row->reserve(coordR.count);
+        row_t->reserve(coordR.count);
 
         d.clear();
-        for (int index2 = 0; index2 < max_index2; ++index2)
+        d.reserve(coordR.count);
+        next_R_val = 0;
+        for (int i = 0; i < coordR.count; ++i)
         {
-            if (index1 == 0) prev_ind1 = index1;
-            else prev_ind1 = index1 - 1;
-            if (index2 == 0) prev_ind2 = index2;
-            else prev_ind2 = index2 - 1;
+            if (i == 0) prev_i = i;
+            else prev_i = i - 1;
+            if (i >= coordR.count - 1) next_i = i;
+            else next_i = i + 1;
 
-            if (index1 >= max_index1 - 1) next_ind1 = index1;
-            else next_ind1 = index1 + 1;
-            if (index2 >= max_index2 - 1) next_ind2 = index2;
-            else next_ind2 = index2 + 1;
+            u_prev_t = (prev_t_count > 0) ? graph_data.u_list[prev_t_count - 1]->at(i)->at(j).y() :
+                        (graph_data.u_list[0]->at(i)->at(j).y() - coordT.step * graph_data.u_t_list[0]->at(i)->at(j).y());
 
-/*            if ((index1 == 0) || (index2 == 0) || (index1 == max_index1 - 1) || (index2 == max_index2 - 1))
-            {
-                u1 = 0;
-                u2 = 0; //(4 / set.stepT / set.stepT - 2 * set.c * set.c / step2 / step2) * prev_graph_data_slice.u->at(index1)->at(index2).y();
-                u3 = 0;
-                u4 = 0; //(2 / set.stepT) * prev_graph_data_slice.u_t->at(index1)->at(index2).y();
-            }
-            else*/ if (stencil == 'x')
-            {
-                u1 = set.c * set.c / step2 / step2 * prev_graph_data_slice.u->at(index1)->at(prev_ind2).y();
-                u2 = (4 / set.stepT / set.stepT - 2 * set.c * set.c / step2 / step2) * prev_graph_data_slice.u->at(index1)->at(index2).y();
-                u3 = set.c * set.c / step2 / step2 * prev_graph_data_slice.u->at(index1)->at(next_ind2).y();
-                u4 = (2 / set.stepT) * prev_graph_data_slice.u_t->at(index1)->at(index2).y();
-            }
-            else if (stencil == 'y')
-            {
-                u1 = set.c * set.c / step2 / step2 * prev_graph_data_slice.u->at(prev_ind1)->at(index2).y();
-                u2 = (4 / set.stepT / set.stepT - 2 * set.c * set.c / step2 / step2) * prev_graph_data_slice.u->at(index1)->at(index2).y();
-                u3 = set.c * set.c / step2 / step2 * prev_graph_data_slice.u->at(next_ind1)->at(index2).y();
-                u4 = (2 / set.stepT) * prev_graph_data_slice.u_t->at(index1)->at(index2).y();
-            }
+            next_R_val += coordR.step;
+            b[i] = 1 / qPow(coordT.step, 2) + 2 * qPow(set.c, 2) / qPow(coordR.step, 2) + qPow(set.c, 2) / (coordR.step * next_R_val);
+            c[i] = -(qPow(set.c, 2) / qPow(coordR.step, 2) + qPow(set.c, 2) / (coordR.step * next_R_val));
+
+            u1 = qPow(set.c, 2) / qPow(coordR.step, 2) * graph_data.u_list[prev_t_count]->at(prev_i)->at(j).y();
+            u2 = ((-2 * qPow(set.c, 2) / qPow(coordR.step, 2)) + 2 / qPow(coordT.step, 2) - qPow(set.c, 2) / (coordR.step * next_R_val)) *
+                    graph_data.u_list[prev_t_count]->at(i)->at(j).y();
+            u3 = (qPow(set.c, 2) / qPow(coordR.step, 2) + qPow(set.c, 2) / (coordR.step * next_R_val)) * graph_data.u_list[prev_t_count]->at(next_i)->at(j).y();
+            u4 = -(1 / qPow(coordT.step, 2)) * u_prev_t;
 
             d.push_back(u1 + u2 + u3 + u4);
         }
 
-        MathModule::solve_tridiagonal_equation(a, b, c, d, max_index1);
-        for (int index2 = 0; index2 < max_index2; ++index2)
+        MathModule::solve_tridiagonal_equation(a, b, c, d, coordR.count);
+        for (int i = 0; i < coordR.count; ++i)
         {
-            auto& prev_vector = prev_graph_data_slice.u->at(index1)->at(index2);
-            z_val = d[index2];
+            auto& prev_vector = graph_data.u_list[prev_t_count]->at(i)->at(j);
+            z_val = d[i];
             row->push_back(QVector3D(prev_vector.x(), z_val, prev_vector.z()));
 
-            z_val_t = (z_val - prev_vector.y()) / (set.stepT / 2);
+            z_val_t = (z_val - prev_vector.y()) / (coordT.step / 2);
             row_t->push_back(QVector3D(prev_vector.x(), z_val_t, prev_vector.z()));
+        }
+        cur_graph_data_slice_reversed.u->push_back(row);
+        cur_graph_data_slice_reversed.u_t->push_back(row_t);
+    }
+
+    //reversing the slice
+    GraphDataSlice_t cur_graph_data_slice;
+    cur_graph_data_slice.u = new QSurfaceDataArray();
+    cur_graph_data_slice.u_t = new QSurfaceDataArray();
+    cur_graph_data_slice.u->reserve(coordR.count);
+    cur_graph_data_slice.u_t->reserve(coordR.count);
+
+    for (int i = 0; i < coordR.count; ++i)
+    {
+        QSurfaceDataRow *row = new QSurfaceDataRow();
+        QSurfaceDataRow *row_t = new QSurfaceDataRow();
+        row->reserve(coordF.count);
+        row_t->reserve(coordF.count);
+
+        for (int j = 0; j < coordF.count; ++j)
+        {
+            auto& reversed_vector = cur_graph_data_slice_reversed.u->at(j)->at(i);
+            row->push_back(QVector3D(reversed_vector.x(), reversed_vector.y(), reversed_vector.z()));
         }
         cur_graph_data_slice.u->push_back(row);
         cur_graph_data_slice.u_t->push_back(row_t);
     }
+    clear_graph_data_slice(cur_graph_data_slice_reversed);
 
     return cur_graph_data_slice;
 }

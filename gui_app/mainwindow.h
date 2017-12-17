@@ -11,6 +11,7 @@
 #include <QTimer>
 #include <QTableWidgetItem>
 #include <QLabel>
+#include <QThread>
 
 #include <QJsonValue>
 #include <QJsonArray>
@@ -34,6 +35,7 @@
 #include "../pde_solver/pde_solver_base.h"
 #include "../pde_solver/pde_solver_heat_equation.h"
 #include "../pde_solver/pde_solver_wave_equation.h"
+#include "../pde_solver/pde_solver_structs.h"
 
 /**
  * @brief The main controlling GUI class.
@@ -44,7 +46,7 @@ class MainWindow : public QMainWindow
 
 public:
 	MainWindow(QWidget *parent = Q_NULLPTR);
-    ~MainWindow();
+    virtual ~MainWindow();
 
     void start();
 
@@ -61,34 +63,35 @@ public slots:
     void LastSlidePushButton_clicked();
 
     void toggle_graph_playing(bool play);
-    void change_pde_solver(QString);
+    void change_pde_solver(QString new_solver);
+    void change_pde_settings_coord_system(QString new_coord_system);
 
     void GraphTimeSpeedSlider_changed(int);
-    //void PdeSettingsTableWidgetCellClickedSlot(int, int);
 
-    void graph_solution_generated(PdeSolverBase::GraphSolution_t);
+    void graph_solution_generated(PdeSolver::GraphSolution_t);
     void solution_progress_updated(QString, int);
 
 private:
     void init_graph();
-    void init_PdeSettingsTableWidget(const PdeSettings& set);
+    void set_PdeSettingsTableWidget(const PdeSettings& set);
 	std::shared_ptr<PdeSettings> init_pde_settings(QString pde_settings_filename);
     void init_EquationComboBox();
+
+    PdeSettings get_pde_settings_from_TableWidget();
 
     void set_TimeSlice(int new_time_slice);
 
 	Ui::MainWindowClass ui;
 
-    void clear_graph_data(PdeSolverBase::GraphData_t& graph_data);
+    void clear_graph_data(PdeSolver::GraphData_t& graph_data);
 
-	std::shared_ptr<PdeSettings> m_PdeSettings;
+    std::shared_ptr<PdeSettings> m_PdeSettings;
 	QString m_pde_settings_filename;
 
-	//QtDataVisualization::QSurfaceDataProxy m_SurfaceDataProxy;
     QtDataVisualization::QSurface3DSeries *m_series;
     QtDataVisualization::Q3DSurface *m_graph;
     std::shared_ptr<PdeSolverBase> m_PdeSolver;  // std::shared_ptr<PdeSolver>
-    PdeSolverBase::GraphData_t m_graph_data;
+    PdeSolver::GraphData_t m_graph_data;
 
     bool m_graph_is_valid = false;
 

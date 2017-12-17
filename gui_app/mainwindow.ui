@@ -71,6 +71,9 @@
          <widget class="QComboBox" name="EquationComboBox"/>
         </item>
         <item>
+         <widget class="QComboBox" name="MethodsComboBox"/>
+        </item>
+        <item>
          <widget class="QTableWidget" name="PdeSettingsTableWidget">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -137,7 +140,7 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="layoutWidget">
        <layout class="QVBoxLayout" name="GraphLayout"/>
       </widget>
      </widget>

@@ -1,5 +1,4 @@
 BUGS:
-	(!IMPORTANT!) wave equation solution is unstable (why?);
 	somehow remove the empty place at the top of group boxes (Qt bug, meh);
 	cannot declare a QScriptEngine instance in the PdeSettings class (why?);
 
@@ -9,4 +8,5 @@ FEATURES:
 	generating initial conditions is very slow, possibly due to QScriptEngine. make it work faster;
 	add a stability checking and approximation display on GUI;
 	add different solving methods (like implicit/explicit methods, Crank-Nicolson method etc.);
-	add polar coordinates support;
+	add json output for both polar and Cartesian coord systems;
+	add a control that X and Y Cartesian coordinates cannot be set different (or implement methods allowing it);

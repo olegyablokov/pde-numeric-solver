@@ -16,8 +16,17 @@
  */
 class PdeSettings
 {
-public:    
+public:
+    enum CoordsType
+    {
+        Cartesian = 0,
+        Polar = 1       /**< If Polar, the x-axis becomes the angular axis and the z-axis becomes the radial axis (source: Qt docs) */
+    };
+    CoordsType m_CoordsType = CoordsType::Cartesian;
+
     PdeSettings();
+    PdeSettings(const PdeSettings& other);
+    PdeSettings(CoordsType coords_type, int dim = -1);
 
     /**
      * @brief A constructor for creating an object from a QVariantMap.
@@ -27,26 +36,34 @@ public:
 
     ~PdeSettings();
 
+
+    void set_coords_type(CoordsType new_type, int new_dim = -1);
+    void set_coords_dim(int new_dim);
+
     float V1(QVector2D x) const;  /**< The initial function u(x, 0) */
-    float V2(QVector2D x) const;  /**< The initial function 𝛿u/𝛿t(x, 0) */
+    float V2(QVector2D x) const;  /**< The initial function 𝛿u/𝛿t(x, 0) (if used) */
 
     float c = 2.0f;     /**< A constant (e.g. for the heat equation: 𝛿u/𝛿t = c^2 * Δu) */
     float m = 1.0f;     /**< The scale coefficient for V1 and V2 functions (i.e. V1(x) -> V1(x / m) and the same for V2) */
 
-    int countX = 50;    /**< The number of nodes along the X axis */
-    int countY = 50;    /**< The number of nodes along the Y axis */
-    int countT = 1;     /**< The number of nodes along the T axis */
+    int m_Dim = 2;      /**< The dimension */
 
-    float minX;         /**< The minimum X value of the grid */
-    float maxX;         /**< The maximum X value of the grid */
-    float minY;         /**< The minimum Y value of the grid */
-    float maxY;         /**< The maximum Y value of the grid */
-    float minT;         /**< The minimum T value of the grid */
-    float maxT;         /**< The maximum T value of the grid */
+    struct CoordGridSet_t
+    {
+        int count = 10;             /**< The number of nodes along the axis */
+        float step = 0.1;           /**< The step along the axis */
+        float min = 0;              /**< The minimum value along the axis */
+        float max = 1;              /**< The maximum value along the axis */
+        QString label = "<label>";  /**< e.g. "X1", "R", "T" etc. */
+        QString descr = "<descr>";  /**< e.g. "The time axis" */
 
-    float stepX = 0.1;  /**< The step along the X axis */
-    float stepY = 0.1;  /**< The step along the Y axis */
-    float stepT = 0.1;  /**< The step along the T axis */
+        CoordGridSet_t() {}
+        CoordGridSet_t(int count_, float step_, float min_, float max_, QString label_ = "<label>", QString descr_ = "<descr>")
+        { count = count_; step = step_; min = min_; max = max_; label = label_; descr = descr_; }
+    };
+    QVector<CoordGridSet_t> m_Coords;
+
+    const CoordGridSet_t* get_coord_by_label(QString label) const;
 
     /**
      * @brief A method for changing the object data from a QVariantMap.
