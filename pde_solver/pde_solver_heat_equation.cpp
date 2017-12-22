@@ -159,6 +159,7 @@ GraphDataSlice_t PdeSolverHeatEquation::alternating_direction_method(const PdeSe
                 u2 = (2 / coordT.step - 2 * set.c * set.c / step2 / step2) * prev_graph_data_slice.u->at(index1)->at(index2).y();
                 u3 = set.c * set.c / step2 / step2 * prev_graph_data_slice.u->at(next_ind1)->at(index2).y();
             }
+            else throw("Wrong stencil");
 
             d.push_back(u1 + u2 + u3);
         }
