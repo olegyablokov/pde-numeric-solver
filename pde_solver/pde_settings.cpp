@@ -1,3 +1,26 @@
+/*
+    Copyright (c) 2017 Oleg Yablokov
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+
+**/
+
 #include "pde_settings.h"
 #include <QVector2D>
 #include <algorithm>
@@ -48,19 +71,19 @@ void PdeSettings::set_coords_type(CoordsType new_type, int new_dim)
 
     if (new_type == CoordsType::Polar)
     {
-        V1_str = "10 * sin(R)  * abs(cos(6 * sin(PI * F / 3) + R))";
-        V2_str = "R";
-        m_Coords.push_back(CoordGridSet_t(120, 0.1, 0, 1, "R"));
+        V1_str = "30 * pow(E, -R*R)";
+        V2_str = "pow(E, -R*R)";
+        m_Coords.push_back(CoordGridSet_t(200, 0.05, 0, 10, "R"));
         for (int i = 1; i < new_dim; ++i)
         {
             m_Coords.push_back(CoordGridSet_t(40, 0.1, 0, 1, "F" + QString::number(i)));
         }
-        m_Coords.push_back(CoordGridSet_t(400, 0.03, 0, 1, "T"));
+        m_Coords.push_back(CoordGridSet_t(400, 0.02, 0, 8, "T"));
     }
     else if (new_type == CoordsType::Cartesian)
     {
         V1_str = "10 * pow(E, -(abs(x)+abs(y))/5)*sin((abs(x)+abs(y)))";
-        V2_str = "R";
+        V2_str = "sin(R)/(R+0.01)";
         for (int i = 1; i < new_dim + 1; ++i)
         {
             m_Coords.push_back(CoordGridSet_t(50, 0.2, 0, 1, "X" + QString::number(i)));
@@ -94,7 +117,6 @@ float PdeSettings::evaluate_expression(QString expression, QVector2D x) const
     if (m_CoordsType == CoordsType::Polar)
     {
         expression.replace("R", QString::number(x[0] / (m * m)));
-        expression.replace("F", QString::number(x[1]));
     }
     else if (m_CoordsType == CoordsType::Cartesian)
     {
@@ -189,7 +211,7 @@ QVariantMap PdeSettings::toQVariantMap() const
     QVariantMap map;
 
     map.insert("V1", V1_str);
-    map.insert("V2", V2_str);
+    if (m_CoordsType != CoordsType::Cartesian) map.insert("V2", V2_str);
 
     map.insert("c", c);
     map.insert("m", m);

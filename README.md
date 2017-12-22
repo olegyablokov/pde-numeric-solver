@@ -1,7 +1,7 @@
 ## Getting started
 The program is being developed for numerical solving of some pde equations. Right now it supports:
 - The 2d heat equation which is solved using the [alternating direction implicit method](https://en.wikipedia.org/wiki/Alternating_direction_implicit_method#cite_ref-2) (in Cartesian coordinates);
-- The 2d wave equation which is solved using the [Crank–Nicolson method](https://en.wikipedia.org/wiki/Crank%E2%80%93Nicolson_method) (in polar coordinates).
+- The 2d center-symmetric wave equation which is solved using the [Crank–Nicolson method](https://en.wikipedia.org/wiki/Crank%E2%80%93Nicolson_method) (in polar coordinates).
 
 ## Build
 The only external library the program depends on is Qt5.
