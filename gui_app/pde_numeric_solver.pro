@@ -16,6 +16,7 @@ OBJECTS_DIR = $${CONFIGURATION}/.obj
 MOC_DIR = $${CONFIGURATION}/.moc
 RCC_DIR = $${CONFIGURATION}/.rcc
 UI_DIR = $${CONFIGURATION}/.ui
+DESTDIR = $${CONFIGURATION}
 
 HEADERS += mainwindow.h \
 	../pde_solver/pde_solver_heat_equation.h \
