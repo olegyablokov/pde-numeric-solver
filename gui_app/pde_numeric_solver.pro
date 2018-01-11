@@ -1,9 +1,9 @@
+lessThan(QT_MAJOR_VERSION, 5): error("Qt5 or newer is required")
 TEMPLATE = app
 QT += core widgets gui datavisualization script
 DEFINES += QT_DEPRECATED_WARNINGS
 
-DIR = ../build
-NAME = gui_app
+NAME = pde_solver_gui_app
 
 CONFIG(release, debug|release) {
   CONFIGURATION = release
@@ -12,11 +12,10 @@ CONFIG(debug, debug|release) {
   CONFIGURATION = debug
 }
 
-DESTDIR = $${DIR}/$${NAME}_$${CONFIGURATION}
-OBJECTS_DIR = $${DESTDIR}/.obj
-MOC_DIR = $${DESTDIR}/.moc
-RCC_DIR = $${DESTDIR}/.rcc
-UI_DIR = $${DESTDIR}/.ui
+OBJECTS_DIR = $${CONFIGURATION}/.obj
+MOC_DIR = $${CONFIGURATION}/.moc
+RCC_DIR = $${CONFIGURATION}/.rcc
+UI_DIR = $${CONFIGURATION}/.ui
 
 HEADERS += mainwindow.h \
 	../pde_solver/pde_solver_heat_equation.h \
