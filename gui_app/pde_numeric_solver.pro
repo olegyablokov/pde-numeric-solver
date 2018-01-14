@@ -5,12 +5,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 NAME = pde_solver_gui_app
 
-CONFIG(release, debug|release) {
-  CONFIGURATION = release
+CONFIG(release, debug|release) 
+{
+	CONFIGURATION = release
 }
-CONFIG(debug, debug|release) {
-  CONFIGURATION = debug
-}
+CONFIG(debug, debug|release) 
+{
+	CONFIGURATION = debug
+} else:error("Wrong config")
 
 OBJECTS_DIR = $${CONFIGURATION}/.obj
 MOC_DIR = $${CONFIGURATION}/.moc

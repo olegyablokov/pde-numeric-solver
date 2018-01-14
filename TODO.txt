@@ -7,6 +7,9 @@ FEATURES:
 	add explicit calculation of pde (maybe add some graphs for numerical soulution occuracy?);
 	generating initial conditions is very slow, possibly due to QScriptEngine. make it work faster;
 	add a stability checking and approximation display on GUI;
-	add different solving methods (like implicit/explicit methods, Crank-Nicolson method etc.);
+	add different solving methods (like implicit/explicit methods, non-symmetric Crank-Nicolson method etc.);
 	add json output for both polar and Cartesian coord systems;
 	add a control that X and Y Cartesian coordinates cannot be set different (or implement methods allowing it);
+	let PdeSolverBase inheritors provide MainWindow with PdeSettings;
+	add Poisson's equation;
+	add a support for inhomogeneous equations;

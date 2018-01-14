@@ -12,10 +12,10 @@ The project is configured with QMake. If you encounter problems with linking ple
 This is an example of how to build the program:
 ```shell
 cd gui_app; mkdir build; cd build                 # Make a build directory.
-qmake ../pde_numeric_solver.pro -CONFIG=release   # Generate a Makefile (use -CONFIG=debug for debug configuration).
+qmake CONFIG+=release ../pde_numeric_solver.pro   # Generate a Makefile (use CONFIG+=debug for debug configuration).
 make                                              # Build the program.
 ```
-If all goes right, an application binary will appear in `debug` or `release` directory (depending on your configuration settings).
+If all goes right, an application binary file will appear in `debug` or `release` directory (depending on your configuration settings).
 
 ## Docs
 The project supports auto-documentation by [Doxygen](http://www.stack.nl/~dimitri/doxygen/). You will need to generate docs to use them:
