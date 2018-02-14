@@ -1,4 +1,4 @@
-## Getting started
+﻿## Getting started
 The program is being developed for numerical solving of some pde equations. Right now it supports:
 - The 2d heat equation which is solved using the [alternating direction implicit method](https://en.wikipedia.org/wiki/Alternating_direction_implicit_method#cite_ref-2) (in Cartesian coordinates);
 - The 2d center-symmetric wave equation which is solved using the [Crank–Nicolson method](https://en.wikipedia.org/wiki/Crank%E2%80%93Nicolson_method) (in polar coordinates).
@@ -12,7 +12,7 @@ The project is configured with QMake. If you encounter problems with linking ple
 This is an example of how to build the program:
 ```shell
 cd gui_app; mkdir build; cd build                 # Make a build directory.
-qmake CONFIG+=release ../pde_numeric_solver.pro   # Generate a Makefile (use CONFIG+=debug for debug configuration).
+qmake ../pde_numeric_solver.pro    		  # Generate a Makefile.
 make                                              # Build the program.
 ```
 If all goes right, an application binary file will appear in `debug` or `release` directory (depending on your configuration settings).

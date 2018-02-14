@@ -12,7 +12,7 @@ CONFIG(release, debug|release)
 CONFIG(debug, debug|release) 
 {
 	CONFIGURATION = debug
-} else:error("Wrong config")
+}
 
 OBJECTS_DIR = $${CONFIGURATION}/.obj
 MOC_DIR = $${CONFIGURATION}/.moc
