@@ -1,0 +1,10 @@
+﻿**/x64
+**/release
+/gui_app/GeneratedFiles
+**/debug
+**/build
+/gui_app/.qmake.stash
+**/pde_settings.json
+**/*.vcxproj.user
+**/*.vcxproj.filters
+**/*.vcxproj

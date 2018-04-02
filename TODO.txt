@@ -12,4 +12,3 @@ FEATURES:
 	add a control that X and Y Cartesian coordinates cannot be set different (or implement methods allowing it);
 	let PdeSolverBase inheritors provide MainWindow with PdeSettings;
 	add Poisson's equation;
-	add a support for inhomogeneous equations;

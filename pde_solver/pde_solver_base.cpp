@@ -22,7 +22,6 @@
 **/
 
 #include "pde_solver_base.h"
-#include <unistd.h>
 
 using namespace QtDataVisualization;
 using namespace PdeSolver;
@@ -32,6 +31,7 @@ Q_DECLARE_METATYPE(PdeSolver::GraphData_t);
 Q_DECLARE_METATYPE(PdeSolver::GraphSolution_t);
 Q_DECLARE_METATYPE(PdeSolver::SolutionMethod_t);
 Q_DECLARE_METATYPE(PdeSettings);
+
 
 PdeSolverBase::PdeSolverBase(QObject *parent) : QObject(parent)
 {

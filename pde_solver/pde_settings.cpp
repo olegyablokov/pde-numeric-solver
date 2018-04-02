@@ -40,7 +40,8 @@ PdeSettings::PdeSettings(const PdeSettings& other)
     m = other.m;
     m_Coords = other.m_Coords;
     V1_str = other.V1_str;
-    V2_str = other.V2_str;
+	V2_str = other.V2_str;
+	f_str = other.f_str;
 }
 
 PdeSettings::PdeSettings(CoordsType coords_type, int dim)
@@ -69,30 +70,8 @@ void PdeSettings::set_coords_type(CoordsType new_type, int new_dim)
     m_Coords.clear();
     m_CoordsType = new_type;
 
-    if (new_type == CoordsType::Polar)
-    {
-        V1_str = "30 * pow(E, -R*R)";
-        V2_str = "pow(E, -R*R)";
-        m_Coords.push_back(CoordGridSet_t(200, 0.05, 0, 10, "R"));
-        for (int i = 1; i < new_dim; ++i)
-        {
-            m_Coords.push_back(CoordGridSet_t(40, 0.1, 0, 1, "F" + QString::number(i)));
-        }
-        m_Coords.push_back(CoordGridSet_t(400, 0.02, 0, 8, "T"));
-    }
-    else if (new_type == CoordsType::Cartesian)
-    {
-        V1_str = "10 * pow(E, -(abs(x)+abs(y))/5)*sin((abs(x)+abs(y)))";
-        V2_str = "sin(R)/(R+0.01)";
-        for (int i = 1; i < new_dim + 1; ++i)
-        {
-            m_Coords.push_back(CoordGridSet_t(50, 0.2, 0, 1, "X" + QString::number(i)));
-        }
-        m_Coords.push_back(CoordGridSet_t(100, 0.001, 0, 1, "T"));
-    }
-    else throw("Wrong coords type");
-
     set_boundaries();
+	set_defaults();
 }
 
 void PdeSettings::set_coords_dim(int new_dim)
@@ -109,10 +88,14 @@ const PdeSettings::CoordGridSet_t* PdeSettings::get_coord_by_label(QString label
     return NULL;
 }
 
-float PdeSettings::evaluate_expression(QString expression, QVector2D x) const
+float PdeSettings::evaluate_expression(QString expression, QVector2D x, double t) const
 {
+	if ((expression == "") || (expression == "0")) return 0;
+
     //TODO: why problems with declaring QScriptEngine instance in class?
     QScriptEngine m_ScriptEngine1;
+
+	if (!std::isnan(t)) expression.replace("T", QString::number(t));
 
     if (m_CoordsType == CoordsType::Polar)
     {
@@ -130,7 +113,7 @@ float PdeSettings::evaluate_expression(QString expression, QVector2D x) const
     expression.replace("sqrt", "Math.sqrt");
     expression.replace("sin", "Math.sin");
     expression.replace("cos", "Math.cos");
-    expression.replace("tan", "Math.tan");
+    expression.replace("tan", "Math.tan");	
     expression.replace("abs", "Math.abs");
     expression.replace("pow", "Math.pow");
     expression.replace("max", "Math.max");
@@ -152,15 +135,27 @@ float PdeSettings::V2(QVector2D x) const
     return evaluate_expression(V2_str, x);
 }
 
+float PdeSettings::f(QVector2D x, double t) const
+{
+	return evaluate_expression(f_str, x, t);
+}
+
 void PdeSettings::reset(QVariantMap& map)
 {
     m_Coords.clear();
 
     if (map.contains("V1")) V1_str = map["V1"].value<QString>();
-    if (map.contains("V2")) V2_str = map["V2"].value<QString>();
+	if (map.contains("V2")) V2_str = map["V2"].value<QString>();
+	if (map.contains("f")) f_str = map["f"].value<QString>();
 
     if (map.contains("c")) c = map["c"].value<float>();
     if (map.contains("m")) m = map["m"].value<float>();
+
+	if (map.contains("CoordsType"))
+	{
+		if (map["CoordsType"].value<QString>() == "Cartesian") m_CoordsType = CoordsType::Cartesian;
+		else if (map["CoordsType"].value<QString>() == "Polar") m_CoordsType = CoordsType::Polar;
+	}
 
     QString key, label;
     bool coord_with_current_label_exists = false;
@@ -206,21 +201,53 @@ void PdeSettings::reset(QVariantMap& map)
     set_boundaries();
 }
 
+void PdeSettings::set_defaults()
+{
+	if (m_CoordsType == CoordsType::Polar)
+	{
+		V1_str = "30 * pow(E, -R*R)";
+		V2_str = "pow(E, -R*R)";
+		f_str = "0";
+		m_Coords.push_back(CoordGridSet_t(200, 0.05, 0, 10, "R"));
+		for (int i = 1; i < m_Dim; ++i)
+		{
+			m_Coords.push_back(CoordGridSet_t(40, 0.1, 0, 1, "F" + QString::number(i)));
+		}
+		m_Coords.push_back(CoordGridSet_t(400, 0.02, 0, 8, "T"));
+	}
+	else if (m_CoordsType == CoordsType::Cartesian)
+	{
+		V1_str = "10 * pow(E, -(abs(x)+abs(y))/5)*sin((abs(x)+abs(y)))";
+		V2_str = "0";
+		f_str = "0";
+		for (int i = 1; i < m_Dim + 1; ++i)
+		{
+			m_Coords.push_back(CoordGridSet_t(50, 0.2, 0, 1, "X" + QString::number(i)));
+		}
+		m_Coords.push_back(CoordGridSet_t(100, 0.001, 0, 1, "T"));
+	}
+	else throw("Wrong coords type");
+}
+
 QVariantMap PdeSettings::toQVariantMap() const
 {
     QVariantMap map;
 
     map.insert("V1", V1_str);
-    if (m_CoordsType != CoordsType::Cartesian) map.insert("V2", V2_str);
+	if (m_CoordsType != CoordsType::Cartesian) map.insert("V2", V2_str);
+	map.insert("f", f_str);
 
-    map.insert("c", c);
-    map.insert("m", m);
+	map.insert("m", m);
+	map.insert("c", c);
 
     for (auto& coord : m_Coords)
     {
         map.insert("count" + coord.label, coord.count);
         map.insert("step" + coord.label, coord.step);
     }
+
+	if (m_CoordsType == CoordsType::Cartesian) map.insert("CoordsType", "Cartesian");
+	else if (m_CoordsType == CoordsType::Polar) map.insert("CoordsType", "Polar");
 
     return map;
 }
@@ -230,7 +257,8 @@ QVariantMap PdeSettings::getQVariantMapToolTips() const
     QVariantMap map;
 
     map.insert("V1", "The initial function u(x, 0)");
-    map.insert("V2", "The initial function 𝛿u/𝛿t(x, 0) (if used)");
+	map.insert("V2", "The initial function 𝛿u/𝛿t(x, 0) (if used)");
+	map.insert("f", "The right part of the equation.");
 
     map.insert("c", "A constant (e.g. for the heat equation: 𝛿u/𝛿t = c^2 * Δu)");
     map.insert("m", "The scale coefficient for V1 and V2 functions (i.e. V1(x) -> V1(x / m) and the same for V2)");

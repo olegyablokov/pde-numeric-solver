@@ -32,6 +32,7 @@
 
 #include <memory>
 #include <functional>
+#include <limits>
 #include <sys/types.h>
 
 /**
@@ -64,7 +65,8 @@ public:
     void set_coords_dim(int new_dim);
 
     float V1(QVector2D x) const;  /**< The initial function u(x, 0) */
-    float V2(QVector2D x) const;  /**< The initial function 𝛿u/𝛿t(x, 0) (if used) */
+	float V2(QVector2D x) const;  /**< The initial function 𝛿u/𝛿t(x, 0) (if used) */
+	float f(QVector2D x, double t) const;  /**< The right part of the equation. */
 
     float c = 2.0f;     /**< A constant (e.g. for the heat equation: 𝛿u/𝛿t = c^2 * Δu) */
     float m = 1.0f;     /**< The scale coefficient for V1 and V2 functions (i.e. V1(x) -> V1(x / m) and the same for V2) */
@@ -94,6 +96,8 @@ public:
      * If an entry is missing, no change for the entry will be applied.
      */
     void reset(QVariantMap& map);
+
+	void set_defaults();
 
     /**
      * @brief A method for getting a QvariantMap of the members of the object.
@@ -126,9 +130,10 @@ public:
 private:
     QString V1_str = "30*pow(E, -(abs(x)+abs(y))/5)*sin((abs(x)+abs(y)))";
     QString V2_str = "R";
+	QString f_str = "sin(R) / (R + 1)";
 
     void set_boundaries();
-    float evaluate_expression(QString expression, QVector2D x) const;
+	float evaluate_expression(QString expression, QVector2D x, double t = NAN) const;
 };
 
-#endif //PDE_SETTINGS_H
+#endif //PDE_SETTINGS_H	

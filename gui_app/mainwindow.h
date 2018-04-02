@@ -60,6 +60,7 @@
 #include "../pde_solver/pde_solver_wave_equation.h"
 #include "../pde_solver/pde_solver_structs.h"
 
+
 /**
  * @brief The main controlling GUI class.
  */
@@ -87,7 +88,6 @@ public slots:
 
     void toggle_graph_playing(bool play);
     void change_pde_solver(QString new_solver);
-    void change_pde_settings_coord_system(QString new_coord_system);
 
     void GraphTimeSpeedSlider_changed(int);
 
@@ -109,21 +109,21 @@ private:
     void clear_graph_data(PdeSolver::GraphData_t& graph_data);
 
     std::shared_ptr<PdeSettings> m_PdeSettings;
-	QString m_pde_settings_filename;
+	QString m_PdeSettingsFilename;
 
-    QtDataVisualization::QSurface3DSeries *m_series;
-    QtDataVisualization::Q3DSurface *m_graph;
-    std::shared_ptr<PdeSolverBase> m_PdeSolver;  // std::shared_ptr<PdeSolver>
-    PdeSolver::GraphData_t m_graph_data;
+    QtDataVisualization::QSurface3DSeries *m_Series;
+    QtDataVisualization::Q3DSurface *m_Graph;
+    std::shared_ptr<PdeSolverBase> m_PdeSolver;
+    PdeSolver::GraphData_t m_GraphData;
 
-    bool m_graph_is_valid = false;
+    bool m_GraphIsValid = false;
 
-    int m_current_time_slice = 0;
-    int m_graph_update_time_step = 40;  // in ms
+    int m_CurrentTimeSlice = 0;
+    int m_GraphUpdateTimeStep = 40;  // in ms
 
     QThread m_GraphThread;
 
-    QTimer* m_timer;
+    QTimer* m_Timer;
 
     QLabel* m_GraphOccuracyLabel;
 

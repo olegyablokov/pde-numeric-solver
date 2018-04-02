@@ -68,8 +68,8 @@ void PdeSolverHeatEquation::get_solution(const PdeSettings& set, SolutionMethod_
         cur_graph_data_slice.u = solution.graph_data.u_list.at(t_count - 1);
         cur_graph_data_slice.u_t = solution.graph_data.u_t_list.at(t_count - 1);
 
-        half_new_graph_data_slice = alternating_direction_method(set, cur_graph_data_slice, 'x');
-        new_graph_data_slice = alternating_direction_method(set, half_new_graph_data_slice, 'y');
+        half_new_graph_data_slice = alternating_direction_method(set, cur_graph_data_slice, 'x', t_count);
+        new_graph_data_slice = alternating_direction_method(set, half_new_graph_data_slice, 'y', t_count + 0.5);
 
         solution.graph_data.u_list.push_back(new_graph_data_slice.u);
         solution.graph_data.u_t_list.push_back(new_graph_data_slice.u_t);
@@ -86,7 +86,7 @@ void PdeSolverHeatEquation::get_solution(const PdeSettings& set, SolutionMethod_
 }
 
 GraphDataSlice_t PdeSolverHeatEquation::alternating_direction_method(const PdeSettings& set,
-                                                                     const GraphDataSlice_t& prev_graph_data_slice, char stencil)
+                                                                     const GraphDataSlice_t& prev_graph_data_slice, char stencil, double t_count)
 {
     const PdeSettings::CoordGridSet_t& coordX1 = *set.get_coord_by_label("X1");
     const PdeSettings::CoordGridSet_t& coordX2 = *set.get_coord_by_label("X2");
@@ -123,6 +123,8 @@ GraphDataSlice_t PdeSolverHeatEquation::alternating_direction_method(const PdeSe
     int prev_ind1 = 0, next_ind1 = 0, prev_ind2 = 0, next_ind2 = 0;
 
     float z_val = 0.0f, u1, u2, u3;
+	float index1_val = coordX1.min;
+	float index2_val = coordX2.min;
     for (int index1 = 0; index1 < max_index1; ++index1)
     {
         QSurfaceDataRow *row = new QSurfaceDataRow();
@@ -161,7 +163,9 @@ GraphDataSlice_t PdeSolverHeatEquation::alternating_direction_method(const PdeSe
             }
             else throw("Wrong stencil");
 
-            d.push_back(u1 + u2 + u3);
+            d.push_back(u1 + u2 + u3 + set.f(QVector2D(index1_val, index2_val), t_count));
+			index1_val += coordX1.step;
+			index2_val += coordX2.step;
         }
 
         MathModule::solve_tridiagonal_equation(a, b, c, d, max_index1);

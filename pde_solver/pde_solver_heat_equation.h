@@ -43,7 +43,7 @@ public slots:
     virtual void get_solution(const PdeSettings& set, PdeSolver::SolutionMethod_t method);
 
 protected:
-    PdeSolver::GraphDataSlice_t alternating_direction_method(const PdeSettings& set, const PdeSolver::GraphDataSlice_t& prev_graph_data_slice, char stencil);
+    PdeSolver::GraphDataSlice_t alternating_direction_method(const PdeSettings& set, const PdeSolver::GraphDataSlice_t& prev_graph_data_slice, char stencil, double t_count);
 };
 
 #endif // PDE_SOLVER_HEAT_EQUATION_H
